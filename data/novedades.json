@@ -3,6 +3,11 @@
  "source": "Wikidata",
  "phones": [
   {
+   "name": "iPhone 18 Pro",
+   "brand": "Apple",
+   "date": "2026-09-09"
+  },
+  {
    "name": "Galaxy S26 Ultra",
    "brand": "Samsung",
    "date": "2026-02-25"
@@ -11,11 +16,6 @@
    "name": "Honor Power2",
    "brand": "Honor",
    "date": "2026-01-05"
-  },
-  {
-   "name": "iPhone 18 Pro",
-   "brand": "Apple",
-   "date": "2026-01-01"
   },
   {
    "name": "Huawei Mate 80",
