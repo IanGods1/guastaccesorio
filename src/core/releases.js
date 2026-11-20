@@ -8,7 +8,7 @@ export const POPULAR = ['Apple', 'Samsung', 'Xiaomi', 'Motorola', 'Huawei', 'Hon
 /** Consulta a Wikidata: teléfonos con fabricante y fecha, desde `desde` (AAAA-MM-DD). */
 export function sparql(desde) {
   return `SELECT ?item ?itemLabel ?mfrLabel ?date WHERE {
-  ?item wdt:P31/wdt:P279* wd:Q22645 .
+  ?item wdt:P31/wdt:P279* wd:Q19723451 .
   ?item wdt:P176 ?mfr .
   { ?item wdt:P577 ?date } UNION { ?item wdt:P571 ?date }
   FILTER(?date >= "${desde}T00:00:00Z"^^xsd:dateTime)
