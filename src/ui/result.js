@@ -1,5 +1,5 @@
 // Resultado de un modelo: pestañas Case / Vidrio templado (con las clases Normal, 9D y Privacy).
-import { h, clear, icon, appBar, emptyState, noteBox, choiceRow } from './dom.js';
+import { h, clear, icon, appBar, emptyState, noteBox, choiceRow, bigButton } from './dom.js';
 import { compatibilityFor, othersOf } from '../core/data.js';
 import { VARIANTS, VARIANT_LABEL, VARIANT_FULL, TYPE_LABEL } from '../core/variants.js';
 
@@ -95,7 +95,13 @@ export function ResultScreen(app, modelId) {
       root,
       appBar({ title: model?.name ?? 'Modelo', subtitle: model?.brand, onBack: () => app.router.back('/') }),
       tabs,
-      h('main', { class: 'content' }, variants, content),
+      h(
+        'main',
+        { class: 'content' },
+        variants,
+        content,
+        isAdmin && model ? bigButton('Buscar más con IA', () => app.router.go(`/ai?model=${encodeURIComponent(modelId)}`), { icon: 'sparkle', outline: true }) : null,
+      ),
     );
   }
 

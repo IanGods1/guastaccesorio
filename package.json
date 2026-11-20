@@ -10,6 +10,7 @@
     "build:test": "node build.mjs --test"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^1.11.0",
     "fflate": "0.8.2",
     "firebase": "11.10.0"
   },

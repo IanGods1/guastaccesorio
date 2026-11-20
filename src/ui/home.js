@@ -49,6 +49,7 @@ export function HomeScreen(app) {
         h('p', { class: 'muted' }, 'Escribe un modelo para ver qué otros teléfonos usan el mismo case o el mismo vidrio templado.'),
         bigButton('Lista de modelos', () => app.router.go('/models'), { icon: 'list' }),
         isAdmin ? bigButton('Administrar datos', () => app.router.go('/admin'), { icon: 'edit', outline: true }) : null,
+        isAdmin ? bigButton('Buscar similares con IA', () => app.router.go('/ai'), { icon: 'sparkle', outline: true }) : null,
         isAdmin ? bigButton('Configuración', () => app.router.go('/settings'), { icon: 'settings', outline: true }) : null,
         app.store.ready
           ? h('p', { class: 'muted small' }, `${nModels} modelos registrados · ${nGroups} grupos de compatibilidad`)

@@ -1,6 +1,8 @@
 // Configuración (solo administrador): contraseñas, estado de la nube, tema y cerrar sesión.
 import { h, icon, appBar, bigButton, passwordField, openDialog, confirmDialog, toast } from './dom.js';
 import { validateNewPassword, MIN_PASSWORD_LENGTH } from '../auth.js';
+import { AI_MODELS } from '../core/ai.js';
+import { keyDialog } from './ai.js';
 
 const THEMES = [
   ['system', 'Según el sistema'],
@@ -100,6 +102,44 @@ export function SettingsScreen(app) {
           h('div', null, navigator.onLine ? 'Los cambios que hagas se suben solos y los trabajadores los reciben en sus teléfonos.' : 'Se usa la copia guardada en este dispositivo. Los cambios se subirán cuando vuelva internet.'),
         ),
         h('p', { class: 'muted small' }, 'Usa un solo dispositivo como administrador a la vez para evitar cambios cruzados.'),
+
+        h('div', { class: 'section-title big' }, 'Inteligencia artificial'),
+        h(
+          'div',
+          { class: 'card', style: { padding: '16px', display: 'flex', flexDirection: 'column', gap: '8px' } },
+          h('div', { class: 'bold' }, app.aiSettings.hasKey ? `Llave: ${app.aiSettings.maskedKey}` : 'Sin llave de Anthropic'),
+          h('div', { class: 'small muted' }, 'La llave se guarda solo en este dispositivo. Pon un límite de gasto en console.anthropic.com y anúlala allí si pierdes el dispositivo.'),
+        ),
+        bigButton(app.aiSettings.hasKey ? 'Cambiar llave' : 'Poner llave', () => keyDialog(app, render), { icon: 'lock', outline: true }),
+        app.aiSettings.hasKey
+          ? bigButton(
+              'Quitar la llave de este dispositivo',
+              async () => {
+                if (await confirmDialog({ title: 'Quitar llave', text: 'Solo se quita de este dispositivo. Para anularla del todo, anúlala también en console.anthropic.com → API keys.', confirmText: 'Quitar' })) {
+                  app.aiSettings.key = '';
+                  render();
+                }
+              },
+              { danger: true, outline: true },
+            )
+          : null,
+        h('div', { class: 'section-title' }, 'Modelo de IA'),
+        h(
+          'div',
+          { class: 'card' },
+          AI_MODELS.map((m) =>
+            h('button', { class: 'radio-row', type: 'button', onclick: () => ((app.aiSettings.model = m.id), render()) }, h('span', { class: `dot${app.aiSettings.model === m.id ? ' on' : ''}` }), m.label),
+          ),
+        ),
+        h('div', { class: 'section-title' }, 'Máximo de búsquedas web por consulta'),
+        h(
+          'div',
+          { class: 'chips' },
+          [3, 6, 10].map((n) =>
+            h('button', { class: `chip${app.aiSettings.maxUses === n ? ' on' : ''}`, type: 'button', onclick: () => ((app.aiSettings.maxUses = n), render()) }, `${n} (hasta US$${(n * 0.01).toFixed(2)})`),
+          ),
+        ),
+        h('p', { class: 'muted small' }, 'Cada consulta cuesta aprox. entre US$0.05 y US$0.60 según el modelo (tokens + búsquedas). Después de cada búsqueda la app muestra el costo real estimado.'),
 
         h('div', { class: 'section-title big' }, 'Tema'),
         h(
