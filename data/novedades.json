@@ -1,1 +1,36 @@
-{"updated":"","source":"Wikidata","phones":[]}
+{
+ "updated": "2026-11-20",
+ "source": "Wikidata",
+ "phones": [
+  {
+   "name": "Galaxy S26 Ultra",
+   "brand": "Samsung",
+   "date": "2026-02-25"
+  },
+  {
+   "name": "Honor Power2",
+   "brand": "Honor",
+   "date": "2026-01-05"
+  },
+  {
+   "name": "iPhone 18 Pro",
+   "brand": "Apple",
+   "date": "2026-01-01"
+  },
+  {
+   "name": "Huawei Mate 80",
+   "brand": "Huawei",
+   "date": "2025-11-25"
+  },
+  {
+   "name": "iPhone 17 Pro Max",
+   "brand": "Apple",
+   "date": "2025-09-19"
+  },
+  {
+   "name": "Huawei Mate 70",
+   "brand": "Huawei",
+   "date": "2024-11-26"
+  }
+ ]
+}
