@@ -331,3 +331,9 @@ details > summary { cursor: pointer; padding: 8px 0; font-weight: 600; }
 .result-card { padding: 22px 16px; display: flex; flex-direction: column; gap: 10px; align-items: stretch; }
 .result-ok { width: 72px; height: 72px; border-radius: 50%; display: grid; place-items: center; margin: 0 auto; background: #1f8a4c; color: #fff; }
 
+
+/* ---------- Filtro por marca ---------- */
+.brand-filter { display: flex; gap: 8px; overflow-x: auto; padding: 2px 0 6px; scrollbar-width: none; }
+.brand-filter::-webkit-scrollbar { display: none; }
+.chip { flex: none; padding: 10px 18px; border-radius: 999px; border: 1px solid var(--border); background: var(--surface); color: var(--on-surface, inherit); font: inherit; font-size: 16px; font-weight: 600; cursor: pointer; }
+.chip.on { background: var(--primary); color: var(--on-primary); border-color: var(--primary); }

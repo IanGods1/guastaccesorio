@@ -5,14 +5,23 @@ import { modelsList } from '../core/data.js';
 const SHOW = 30;
 
 export function NewModelsScreen(app) {
+  let brand = '';
+  const chips = h('div', { class: 'brand-filter' });
   const list = h('div', { class: 'stack' });
   const title = appBar({ title: 'Modelos nuevos', subtitle: 'Los últimos que se agregaron', onBack: () => app.router.back('/') });
 
   function render() {
     if (!app.store.ready) return clear(list, h('div', { class: 'spinner' }));
-    const recent = modelsList(app.store.data)
-      .sort((a, b) => Number(b.id) - Number(a.id))
-      .slice(0, SHOW);
+    const all = modelsList(app.store.data).sort((a, b) => Number(b.id) - Number(a.id));
+    const brands = [...new Set(all.map((m) => m.brand))].sort((a, b) => a.localeCompare(b, 'es'));
+    if (brand && !brands.includes(brand)) brand = '';
+    clear(
+      chips,
+      ['', ...brands].map((b) =>
+        h('button', { class: `chip${b === brand ? ' on' : ''}`, type: 'button', onclick: () => ((brand = b), render()) }, b || 'Todas'),
+      ),
+    );
+    const recent = all.filter((m) => !brand || m.brand === brand).slice(0, SHOW);
     if (recent.length === 0) return clear(list, emptyState('Todavía no hay modelos registrados', null));
     clear(
       list,
@@ -34,5 +43,5 @@ export function NewModelsScreen(app) {
   }
 
   render();
-  return { el: h('div', { class: 'screen' }, title, h('main', { class: 'content' }, list)), update: render };
+  return { el: h('div', { class: 'screen' }, title, h('main', { class: 'content' }, chips, list)), update: render };
 }

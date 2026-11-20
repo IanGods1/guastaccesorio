@@ -32,7 +32,7 @@ La web tiene un diseño nuevo: buscador grande con degradado, accesos en mosaico
 
 ## Modelos nuevos
 
-En el inicio, el botón **Modelos nuevos** (para todos) muestra los últimos 30 modelos que se agregaron, el más reciente arriba. Tocar uno abre su compatibilidad.
+En el inicio, el botón **Modelos nuevos** (para todos) muestra los últimos 30 modelos que se agregaron, el más reciente arriba. Arriba hay botones por marca (Todas, Apple, Samsung…) para ver solo los nuevos de una marca. Tocar uno abre su compatibilidad.
 
 ## Pegar información de una IA
 
