@@ -46,6 +46,7 @@ Solo para el administrador (botón **Pegar información** en el inicio).
 2. Copia la respuesta de la IA y pégala en el cuadro (o toca **Pegar del portapapeles**).
 3. Revisa la vista previa (qué grupos y modelos son nuevos y cuáles ya existen) y toca **Agregar y subir a la nube**. Los trabajadores lo ven en segundos.
 
+- **Desde una foto:** en el paso 2 toca **Leer una lista desde una foto**, elige si la lista es de Case o de vidrio (normal, 9D o privacy) y toma o elige la foto. La app lee el texto en el propio teléfono (la imagen no se envía a ningún lado) y arma los grupos: cada renglón con varios modelos separados por coma, "/", "-" o "+", o cada bloque separado por un espacio en blanco, es un grupo de compatibles. El texto queda en el cuadro para que lo corrijas y luego revises la vista previa. La primera vez descarga el lector (unos 10 MB). Funciona mejor con foto recta, cerca y con buena luz.
 - **Subir automáticamente:** marca "Agregar y subir solo al pegar" y se agrega al pegar, sin tocar el botón. Si el texto no se entiende, no agrega nada.
 - **Deshacer:** después de agregar aparece "Deshacer lo que agregué", que también lo quita de la nube.
 - Entiende listas ("Case: iPhone 13, iPhone 14"), abreviaciones ("iPhone 13/14/15"), viñetas, y tablas de Markdown, CSV o Excel pegado. Si pegas algo que ya existe, no se duplica.

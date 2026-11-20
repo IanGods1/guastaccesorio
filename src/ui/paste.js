@@ -1,9 +1,11 @@
 // Pegar información: le preguntas a una IA, copias su respuesta, la pegas aquí y se agrega
 // (y se sube a la nube) con un toque, o solo al pegar si activas la opción. Siempre se puede deshacer.
-import { h, clear, icon, appBar, bigButton, emptyState, toast } from './dom.js';
+import { h, clear, icon, appBar, bigButton, emptyState, toast, openDialog } from './dom.js';
 import { modelsList, saveGroup } from '../core/data.js';
 import { parsePasted, buildPrompt, kindLabel, similarExisting } from '../core/paste.js';
 import { resolveModel } from '../core/naming.js';
+import { photoToText, PHOTO_KINDS } from '../core/photo.js';
+import { readPhoto } from './photo-ocr.js';
 
 const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
 const clone = (x) => JSON.parse(JSON.stringify(x));
@@ -83,6 +85,55 @@ export function PasteScreen(app) {
       toast('Mantén presionado el cuadro de abajo y elige Pegar', 5000);
       textarea.focus();
     }
+  }
+
+  /** Leer una lista de compatibles desde una foto: el texto leído queda en el cuadro para revisarlo. */
+  function photoDialog() {
+    const kind = h('select', { class: 'input' }, PHOTO_KINDS.map((k) => h('option', { value: k.id }, k.label)));
+    const file = h('input', { type: 'file', accept: 'image/*', class: 'input' });
+    const status = h('p', { class: 'muted small' });
+    const bar = h('progress', { max: '1', value: '0', hidden: true, style: { width: '100%' } });
+    let busy = false;
+    const close = openDialog({
+      title: 'Leer una lista desde una foto',
+      body: [
+        h('p', { class: 'small muted' }, 'Toma una foto de tu lista (o elígela de la galería). Cada renglón con modelos compatibles, o cada bloque separado por un espacio, será un grupo.'),
+        h('label', { class: 'field' }, h('span', { class: 'field-label' }, 'La lista es de'), kind),
+        h('label', { class: 'field' }, h('span', { class: 'field-label' }, 'Foto'), file),
+        bar,
+        status,
+      ],
+      actions: [{ label: 'Cerrar' }],
+    });
+    file.onchange = async () => {
+      const f = file.files?.[0];
+      if (!f || busy) return;
+      busy = true;
+      bar.hidden = false;
+      try {
+        const text = await readPhoto(f, (p, msg) => {
+          bar.value = p;
+          status.textContent = msg;
+        });
+        const prefix = PHOTO_KINDS.find((k) => k.id === kind.value).prefix;
+        const res = photoToText(text, prefix);
+        if (res.groups === 0) {
+          status.textContent = 'No encontré grupos de modelos en la foto. Prueba con una foto más cerca, recta y con buena luz.';
+          bar.hidden = true;
+          busy = false;
+          return;
+        }
+        textarea.value = (textarea.value.trim() ? textarea.value.trim() + '\n' : '') + res.text;
+        onChange(false);
+        close();
+        toast(`Leí ${plural(res.groups, 'grupo', 'grupos')}. Revisa que los nombres estén bien antes de agregar`, 6000);
+        textarea.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      } catch (e) {
+        status.textContent = e.message || 'No se pudo leer la foto.';
+        bar.hidden = true;
+        busy = false;
+      }
+    };
   }
 
   function onChange(fromPaste) {
@@ -273,6 +324,7 @@ export function PasteScreen(app) {
                 'div',
                 { class: 'card step' },
                 h('div', { class: 'step-title' }, h('span', { class: 'step-n' }, '2'), 'Pega la respuesta de la IA'),
+                bigButton('Leer una lista desde una foto', photoDialog, { icon: 'phone', outline: true }),
                 textarea,
                 h('div', { class: 'row' }, bigButton('Pegar del portapapeles', pasteFromClipboard, { outline: true, small: true }), bigButton('Borrar', reset, { outline: true, small: true })),
                 h('label', { class: 'check' }, autoBox, h('span', null, 'Agregar y subir solo al pegar, sin tocar el botón (siempre podrás deshacer)')),

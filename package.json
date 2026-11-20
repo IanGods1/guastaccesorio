@@ -10,8 +10,11 @@
     "build:test": "node build.mjs --test"
   },
   "dependencies": {
+    "@tesseract.js-data/eng": "^1.0.0",
     "fflate": "0.8.2",
-    "firebase": "11.10.0"
+    "firebase": "11.10.0",
+    "tesseract.js": "^5.1.1",
+    "tesseract.js-core": "^5.1.1"
   },
   "devDependencies": {
     "esbuild": "0.25.5"
