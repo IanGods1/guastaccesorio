@@ -1,11 +1,181 @@
 {
  "updated": "2026-11-20",
- "source": "Wikidata",
+ "source": "Wikidata y Wikipedia",
  "phones": [
   {
    "name": "iPhone 18 Pro",
    "brand": "Apple",
    "date": "2026-09-09"
+  },
+  {
+   "name": "Galaxy A08",
+   "brand": "Samsung",
+   "year": 2026
+  },
+  {
+   "name": "Galaxy A18",
+   "brand": "Samsung",
+   "year": 2026
+  },
+  {
+   "name": "Galaxy A27 5G",
+   "brand": "Samsung",
+   "year": 2026
+  },
+  {
+   "name": "Galaxy A37 5G",
+   "brand": "Samsung",
+   "year": 2026
+  },
+  {
+   "name": "Galaxy A57 5G",
+   "brand": "Samsung",
+   "year": 2026
+  },
+  {
+   "name": "Galaxy M47 5G",
+   "brand": "Samsung",
+   "year": 2026
+  },
+  {
+   "name": "Galaxy S26",
+   "brand": "Samsung",
+   "year": 2026
+  },
+  {
+   "name": "Galaxy S26 FE",
+   "brand": "Samsung",
+   "year": 2026
+  },
+  {
+   "name": "Galaxy S26+",
+   "brand": "Samsung",
+   "year": 2026
+  },
+  {
+   "name": "Galaxy Z Flip 8",
+   "brand": "Samsung",
+   "year": 2026
+  },
+  {
+   "name": "Galaxy Z Fold 8",
+   "brand": "Samsung",
+   "year": 2026
+  },
+  {
+   "name": "Galaxy Z Fold 8 Ultra",
+   "brand": "Samsung",
+   "year": 2026
+  },
+  {
+   "name": "Honor Magic8 Lite",
+   "brand": "Honor",
+   "year": 2026
+  },
+  {
+   "name": "Infinix Note 60",
+   "brand": "Infinix",
+   "year": 2026
+  },
+  {
+   "name": "Infinix Note 60 Pro",
+   "brand": "Infinix",
+   "year": 2026
+  },
+  {
+   "name": "iPhone 17e",
+   "brand": "Apple",
+   "year": 2026
+  },
+  {
+   "name": "iPhone 18 Pro Max",
+   "brand": "Apple",
+   "year": 2026
+  },
+  {
+   "name": "Moto G (2026)",
+   "brand": "Motorola",
+   "year": 2026
+  },
+  {
+   "name": "Moto G06",
+   "brand": "Motorola",
+   "year": 2026
+  },
+  {
+   "name": "Motorola Signature 27",
+   "brand": "Motorola",
+   "year": 2026
+  },
+  {
+   "name": "Nokia 110 Power",
+   "brand": "Nokia",
+   "year": 2026
+  },
+  {
+   "name": "Oppo Find N6",
+   "brand": "Oppo",
+   "year": 2026
+  },
+  {
+   "name": "Oppo Reno15",
+   "brand": "Oppo",
+   "year": 2026
+  },
+  {
+   "name": "Pixel 10a",
+   "brand": "Google",
+   "year": 2026
+  },
+  {
+   "name": "Pixel 11",
+   "brand": "Google",
+   "year": 2026
+  },
+  {
+   "name": "Pixel 11 Pro",
+   "brand": "Google",
+   "year": 2026
+  },
+  {
+   "name": "Pixel 11 Pro Fold",
+   "brand": "Google",
+   "year": 2026
+  },
+  {
+   "name": "Pixel 11 Pro XL",
+   "brand": "Google",
+   "year": 2026
+  },
+  {
+   "name": "Tecno Camon 50",
+   "brand": "Tecno",
+   "year": 2026
+  },
+  {
+   "name": "Vivo X300 Ultra",
+   "brand": "Vivo",
+   "year": 2026
+  },
+  {
+   "name": "Vivo Y31d",
+   "brand": "Vivo",
+   "year": 2026
+  },
+  {
+   "name": "Xiaomi 17T",
+   "brand": "Xiaomi",
+   "year": 2026
+  },
+  {
+   "name": "Xiaomi 17T Pro",
+   "brand": "Xiaomi",
+   "year": 2026
+  },
+  {
+   "name": "Xiaomi 18 Fold",
+   "brand": "Xiaomi",
+   "year": 2026
   },
   {
    "name": "Galaxy S26 Ultra",
@@ -26,6 +196,266 @@
    "name": "iPhone 17 Pro Max",
    "brand": "Apple",
    "date": "2025-09-19"
+  },
+  {
+   "name": "Galaxy A06 5G",
+   "brand": "Samsung",
+   "year": 2025
+  },
+  {
+   "name": "Galaxy A07",
+   "brand": "Samsung",
+   "year": 2025
+  },
+  {
+   "name": "Galaxy A17",
+   "brand": "Samsung",
+   "year": 2025
+  },
+  {
+   "name": "Galaxy A17 5G",
+   "brand": "Samsung",
+   "year": 2025
+  },
+  {
+   "name": "Galaxy A36 5G",
+   "brand": "Samsung",
+   "year": 2025
+  },
+  {
+   "name": "Galaxy A56 5G",
+   "brand": "Samsung",
+   "year": 2025
+  },
+  {
+   "name": "Galaxy M36 5G",
+   "brand": "Samsung",
+   "year": 2025
+  },
+  {
+   "name": "Galaxy S25",
+   "brand": "Samsung",
+   "year": 2025
+  },
+  {
+   "name": "Galaxy S25 Edge",
+   "brand": "Samsung",
+   "year": 2025
+  },
+  {
+   "name": "Galaxy S25 FE",
+   "brand": "Samsung",
+   "year": 2025
+  },
+  {
+   "name": "Galaxy S25 Ultra",
+   "brand": "Samsung",
+   "year": 2025
+  },
+  {
+   "name": "Galaxy S25+",
+   "brand": "Samsung",
+   "year": 2025
+  },
+  {
+   "name": "Galaxy Z Flip 7",
+   "brand": "Samsung",
+   "year": 2025
+  },
+  {
+   "name": "Galaxy Z Flip 7 FE",
+   "brand": "Samsung",
+   "year": 2025
+  },
+  {
+   "name": "Galaxy Z Fold 7",
+   "brand": "Samsung",
+   "year": 2025
+  },
+  {
+   "name": "Huawei Pura 80",
+   "brand": "Huawei",
+   "year": 2025
+  },
+  {
+   "name": "Infinix Smart 10",
+   "brand": "Infinix",
+   "year": 2025
+  },
+  {
+   "name": "iPhone 16e",
+   "brand": "Apple",
+   "year": 2025
+  },
+  {
+   "name": "iPhone 17",
+   "brand": "Apple",
+   "year": 2025
+  },
+  {
+   "name": "iPhone 17 Pro",
+   "brand": "Apple",
+   "year": 2025
+  },
+  {
+   "name": "Motorola Edge 60 Pro",
+   "brand": "Motorola",
+   "year": 2025
+  },
+  {
+   "name": "Motorola Edge 60 series",
+   "brand": "Motorola",
+   "year": 2025
+  },
+  {
+   "name": "OnePlus 13R",
+   "brand": "OnePlus",
+   "year": 2025
+  },
+  {
+   "name": "Oppo A5 (2025)",
+   "brand": "Oppo",
+   "year": 2025
+  },
+  {
+   "name": "Oppo Find X8",
+   "brand": "Oppo",
+   "year": 2025
+  },
+  {
+   "name": "Oppo Find X9",
+   "brand": "Oppo",
+   "year": 2025
+  },
+  {
+   "name": "Oppo Reno14",
+   "brand": "Oppo",
+   "year": 2025
+  },
+  {
+   "name": "Pixel 10",
+   "brand": "Google",
+   "year": 2025
+  },
+  {
+   "name": "Pixel 10 Pro",
+   "brand": "Google",
+   "year": 2025
+  },
+  {
+   "name": "Pixel 10 Pro Fold",
+   "brand": "Google",
+   "year": 2025
+  },
+  {
+   "name": "Pixel 10 Pro XL",
+   "brand": "Google",
+   "year": 2025
+  },
+  {
+   "name": "Pixel 9a",
+   "brand": "Google",
+   "year": 2025
+  },
+  {
+   "name": "Poco M7",
+   "brand": "Xiaomi",
+   "year": 2025
+  },
+  {
+   "name": "Poco M7 Plus",
+   "brand": "Xiaomi",
+   "year": 2025
+  },
+  {
+   "name": "Realme C71",
+   "brand": "Realme",
+   "year": 2025
+  },
+  {
+   "name": "Redmi 15",
+   "brand": "Xiaomi",
+   "year": 2025
+  },
+  {
+   "name": "Redmi 15 5G",
+   "brand": "Xiaomi",
+   "year": 2025
+  },
+  {
+   "name": "Redmi 15C",
+   "brand": "Xiaomi",
+   "year": 2025
+  },
+  {
+   "name": "Tecno Spark 40",
+   "brand": "Tecno",
+   "year": 2025
+  },
+  {
+   "name": "Tecno Spark 40C",
+   "brand": "Tecno",
+   "year": 2025
+  },
+  {
+   "name": "Vivo V50",
+   "brand": "Vivo",
+   "year": 2025
+  },
+  {
+   "name": "Vivo X300 Pro",
+   "brand": "Vivo",
+   "year": 2025
+  },
+  {
+   "name": "Vivo Y29",
+   "brand": "Vivo",
+   "year": 2025
+  },
+  {
+   "name": "Vivo Y300",
+   "brand": "Vivo",
+   "year": 2025
+  },
+  {
+   "name": "Vivo Y400",
+   "brand": "Vivo",
+   "year": 2025
+  },
+  {
+   "name": "Xiaomi 15 Ultra",
+   "brand": "Xiaomi",
+   "year": 2025
+  },
+  {
+   "name": "Xiaomi 15T",
+   "brand": "Xiaomi",
+   "year": 2025
+  },
+  {
+   "name": "Xiaomi 15T Pro",
+   "brand": "Xiaomi",
+   "year": 2025
+  },
+  {
+   "name": "Xiaomi 17",
+   "brand": "Xiaomi",
+   "year": 2025
+  },
+  {
+   "name": "Xiaomi 17 Max",
+   "brand": "Xiaomi",
+   "year": 2025
+  },
+  {
+   "name": "Xiaomi 17 Pro",
+   "brand": "Xiaomi",
+   "year": 2025
+  },
+  {
+   "name": "Xiaomi 17 Pro Max",
+   "brand": "Xiaomi",
+   "year": 2025
   },
   {
    "name": "Huawei Mate 70",
