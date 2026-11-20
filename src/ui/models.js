@@ -6,6 +6,8 @@ import { knownBrands } from '../core/brands.js';
 
 export function ModelsScreen(app, { admin }) {
   let filter = '';
+  let option = ''; // '' = todas, '#nuevos' = últimos agregados, o una marca
+  const chips = h('div', { class: 'brand-filter' });
   const list = h('div', { class: 'stack' });
   const title = appBar({ title: admin ? 'Administrar modelos' : 'Modelos registrados', onBack: () => app.router.back(admin ? '/admin' : '/') });
 
@@ -24,7 +26,17 @@ export function ModelsScreen(app, { admin }) {
 
   function render() {
     const all = modelsList(app.store.data);
-    const visible = filter.trim() ? searchModels(all, filter, Infinity) : all;
+    const brands = [...new Set(all.map((m) => m.brand))].sort((a, b) => a.localeCompare(b, 'es'));
+    if (option && option !== '#nuevos' && !brands.includes(option)) option = '';
+    clear(
+      chips,
+      [['', 'Todas'], ['#nuevos', 'Nuevos'], ...brands.map((b) => [b, b])].map(([v, label]) =>
+        h('button', { class: `chip${v === option ? ' on' : ''}`, type: 'button', onclick: () => ((option = v), render()) }, label),
+      ),
+    );
+    let visible = filter.trim() ? searchModels(all, filter, Infinity) : all;
+    if (option === '#nuevos') visible = [...visible].sort((a, b) => Number(b.id) - Number(a.id)).slice(0, 30);
+    else if (option) visible = visible.filter((m) => m.brand === option);
     title.querySelector('.appbar-title').replaceChildren(
       h('div', { class: 'at' }, admin ? 'Administrar modelos' : 'Modelos registrados'),
       app.store.ready ? h('div', { class: 'as' }, `${visible.length} modelos`) : null,
@@ -104,7 +116,7 @@ export function ModelsScreen(app, { admin }) {
       'div',
       { class: 'screen' },
       title,
-      h('main', { class: `content${admin ? ' with-fab' : ''}` }, input, list),
+      h('main', { class: `content${admin ? ' with-fab' : ''}` }, input, chips, list),
       admin ? h('button', { class: 'btn fab', type: 'button', onclick: () => editDialog(null) }, icon('add', 22), 'Agregar modelo') : null,
     ),
     update: render,
