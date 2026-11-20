@@ -11,6 +11,7 @@ import { LoadingScreen, LoginScreen, SetupScreen, NeedsInternetScreen } from './
 import { HomeScreen } from './ui/home.js';
 import { ResultScreen } from './ui/result.js';
 import { ModelsScreen } from './ui/models.js';
+import { NewModelsScreen } from './ui/new-models.js';
 import { AdminScreen } from './ui/admin.js';
 import { GroupEditScreen } from './ui/group-edit.js';
 import { SettingsScreen } from './ui/settings.js';
@@ -88,6 +89,7 @@ function routeScreen({ path, query }) {
   if (path === '/') return HomeScreen(app);
   if ((m = path.match(/^\/m\/(.+)$/))) return ResultScreen(app, decodeURIComponent(m[1]));
   if (path === '/models') return ModelsScreen(app, { admin: false });
+  if (path === '/new') return NewModelsScreen(app);
   // Pantallas de administración: no existen para el trabajador.
   if (!admin) return null;
   if (path === '/admin') return AdminScreen(app);
