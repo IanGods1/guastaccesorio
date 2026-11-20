@@ -7,10 +7,10 @@ import { openAppearance } from './appearance.js';
 const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
 
 /** Mosaico de acceso rápido. */
-function tile({ title, sub, icon: name, onclick, primary = false }) {
+function tile({ title, sub, icon: name, onclick, primary = false, wide = false }) {
   return h(
     'button',
-    { class: `tile${primary ? ' primary' : ''}`, type: 'button', onclick },
+    { class: `tile${primary ? ' primary' : ''}${wide ? ' wide' : ''}`, type: 'button', onclick },
     h('span', { class: 'tile-icon' }, icon(name, 26)),
     h('span', { class: 'grow' }, h('span', { class: 'tile-title' }, title), h('br'), h('span', { class: 'tile-sub' }, sub)),
     primary ? h('span', { class: 'chev' }, icon('chevron', 28)) : null,
@@ -80,6 +80,7 @@ export function HomeScreen(app) {
             sub: ready ? plural(models.length, 'modelo registrado', 'modelos registrados') : 'Cargando datos…',
             onclick: () => app.router.go('/models'),
           }),
+          isAdmin ? tile({ wide: true, icon: 'paste', title: 'Pegar información', sub: 'De una IA a tu lista, con un toque', onclick: () => app.router.go('/paste') }) : null,
           isAdmin
             ? tile({ icon: 'edit', title: 'Administrar datos', sub: ready ? plural(nGroups, 'grupo', 'grupos') : '…', onclick: () => app.router.go('/admin') })
             : null,

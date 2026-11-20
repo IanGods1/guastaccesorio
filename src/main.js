@@ -14,6 +14,7 @@ import { ModelsScreen } from './ui/models.js';
 import { AdminScreen } from './ui/admin.js';
 import { GroupEditScreen } from './ui/group-edit.js';
 import { SettingsScreen } from './ui/settings.js';
+import { PasteScreen } from './ui/paste.js';
 import { themeCss, barColor, DEFAULT_COLOR } from './core/theme.js';
 
 /* global __TEST__ */
@@ -67,7 +68,7 @@ function applyTheme() {
 }
 applyTheme();
 
-const app = { backend, store, auth, theme, router: null };
+const app = { backend, store, auth, theme, storage, router: null };
 
 // ---------------------------------------------------------------- Pantalla actual
 
@@ -92,6 +93,7 @@ function routeScreen({ path, query }) {
   if (path === '/admin') return AdminScreen(app);
   if (path === '/admin/models') return ModelsScreen(app, { admin: true });
   if (path === '/settings') return SettingsScreen(app);
+  if (path === '/paste') return PasteScreen(app);
   if (path === '/group/new') return GroupEditScreen(app, { id: null, type: query.type === 'GLASS' ? 'GLASS' : 'CASE', variant: query.variant ?? 'NORMAL' });
   if ((m = path.match(/^\/group\/(.+)$/))) return GroupEditScreen(app, { id: decodeURIComponent(m[1]) });
   return null;

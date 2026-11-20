@@ -30,6 +30,19 @@ La web tiene un diseño nuevo: buscador grande con degradado, accesos en mosaico
 
 ---
 
+## Pegar información de una IA
+
+Solo para el administrador (botón **Pegar información** en el inicio).
+
+1. Escribe el modelo (ej. "iPhone 13") y toca **Copiar la pregunta para la IA**. Pégala en ChatGPT, Claude u otra IA: la pregunta ya le pide la respuesta en el formato que la app entiende.
+2. Copia la respuesta de la IA y pégala en el cuadro (o toca **Pegar del portapapeles**).
+3. Revisa la vista previa (qué grupos y modelos son nuevos y cuáles ya existen) y toca **Agregar y subir a la nube**. Los trabajadores lo ven en segundos.
+
+- **Subir automáticamente:** marca "Agregar y subir solo al pegar" y se agrega al pegar, sin tocar el botón. Si el texto no se entiende, no agrega nada.
+- **Deshacer:** después de agregar aparece "Deshacer lo que agregué", que también lo quita de la nube.
+- Entiende listas ("Case: iPhone 13, iPhone 14"), abreviaciones ("iPhone 13/14/15"), viñetas, y tablas de Markdown, CSV o Excel pegado. Si pegas algo que ya existe, no se duplica.
+- La información viene de la IA y puede tener errores: verifícala con el producto antes de venderlo.
+
 ## Activarla en GitHub (una sola vez)
 
 Cada cambio en `main` se prueba, se compila y se deja en la rama `gh-pages` (flujo **Publicar web**, pestaña **Actions**). Falta decirle a GitHub que muestre esa rama:
