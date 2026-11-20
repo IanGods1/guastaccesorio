@@ -1,5 +1,5 @@
 // Resultado de un modelo: pestañas Case / Vidrio templado (con las clases Normal, 9D y Privacy).
-import { h, clear, icon, appBar, emptyState, noteBox, choiceRow, bigButton } from './dom.js';
+import { h, clear, icon, appBar, emptyState, noteBox, choiceRow, avatar } from './dom.js';
 import { compatibilityFor, othersOf } from '../core/data.js';
 import { VARIANTS, VARIANT_LABEL, VARIANT_FULL, TYPE_LABEL } from '../core/variants.js';
 
@@ -75,12 +75,13 @@ export function ResultScreen(app, modelId) {
                 'div',
                 { class: 'group-head' },
                 h('div', { class: 'grow' }, g.name),
-                isAdmin ? h('button', { class: 'icon-btn', style: { color: 'var(--primary)' }, type: 'button', 'aria-label': 'Editar grupo', onclick: () => app.router.go(`/group/${g.id}`) }, icon('edit')) : h('div', { style: { height: '12px' } }),
+                isAdmin ? h('button', { class: 'icon-btn', type: 'button', 'aria-label': 'Editar grupo', onclick: () => app.router.go(`/group/${g.id}`) }, icon('edit')) : h('div', { style: { height: '12px' } }),
               ),
               g.others.map((m) =>
                 h(
                   'button',
                   { class: 'list-item', type: 'button', onclick: () => app.router.go(`/m/${m.id}`) },
+                  avatar(m.brand),
                   h('div', { class: 'grow' }, h('div', { class: 'li-title' }, m.name), h('div', { class: 'li-sub' }, m.brand)),
                   icon('chevron'),
                 ),
@@ -100,7 +101,6 @@ export function ResultScreen(app, modelId) {
         { class: 'content' },
         variants,
         content,
-        isAdmin && model ? bigButton('Buscar más con IA', () => app.router.go(`/ai?model=${encodeURIComponent(modelId)}`), { icon: 'sparkle', outline: true }) : null,
       ),
     );
   }

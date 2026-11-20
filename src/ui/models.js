@@ -1,5 +1,5 @@
 // Lista de todos los modelos por marca. En modo administrador permite agregar, editar y eliminar modelos.
-import { h, clear, icon, appBar, emptyState, openDialog, confirmDialog, toast } from './dom.js';
+import { h, clear, icon, appBar, emptyState, openDialog, confirmDialog, toast, avatar } from './dom.js';
 import { modelsByBrand, modelsList, addModel, updateModel, deleteModel } from '../core/data.js';
 import { searchModels } from '../core/search.js';
 import { knownBrands } from '../core/brands.js';
@@ -39,7 +39,7 @@ export function ModelsScreen(app, { admin }) {
     clear(
       list,
       modelsByBrand(visible).map(({ brand, models }) => [
-        h('div', { class: 'brand-head' }, `${brand} (${models.length})`),
+        h('div', { class: 'brand-head' }, avatar(brand, 'sm'), h('span', null, brand), h('span', { class: 'count' }, String(models.length))),
         h(
           'div',
           { class: 'card' },

@@ -15,7 +15,6 @@ await build({
   bundle: true,
   minify: true,
   format: 'esm',
-  splitting: true,
   target: ['es2020', 'safari14', 'chrome90'],
   define: { __TEST__: String(test) },
   legalComments: 'none',

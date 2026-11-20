@@ -14,8 +14,7 @@ import { ModelsScreen } from './ui/models.js';
 import { AdminScreen } from './ui/admin.js';
 import { GroupEditScreen } from './ui/group-edit.js';
 import { SettingsScreen } from './ui/settings.js';
-import { AiScreen } from './ui/ai.js';
-import { AiSettings } from './ai-settings.js';
+import { themeCss, barColor, DEFAULT_COLOR } from './core/theme.js';
 
 /* global __TEST__ */
 
@@ -36,21 +35,39 @@ const backend = __TEST__ ? new MemoryBackend() : new FirebaseBackend(firebaseCon
 const store = new Store(backend);
 const auth = new AuthManager(backend, storage);
 
+// Una versión anterior guardaba aquí una llave de IA (esa función ya no existe): se borra.
+for (const k of ['gc_ai_key', 'gc_ai_model', 'gc_ai_max_uses']) storage.removeItem(k);
+
+// Color y modo de la app (se guardan en este dispositivo).
+const themeStyle = document.createElement('style');
+themeStyle.id = 'gc-theme';
+document.head.append(themeStyle);
+const themeMeta = document.querySelector('meta[name="theme-color"]');
 const theme = {
-  get: () => storage.getItem('gc_theme') ?? 'system',
-  set(v) {
+  get mode() {
+    return storage.getItem('gc_theme') ?? 'system';
+  },
+  setMode(v) {
     storage.setItem('gc_theme', v);
+    applyTheme();
+  },
+  get color() {
+    return storage.getItem('gc_color') ?? DEFAULT_COLOR;
+  },
+  setColor(v) {
+    storage.setItem('gc_color', v);
     applyTheme();
   },
 };
 function applyTheme() {
-  const v = theme.get();
-  if (v === 'system') delete document.documentElement.dataset.theme;
-  else document.documentElement.dataset.theme = v;
+  if (theme.mode === 'system') delete document.documentElement.dataset.theme;
+  else document.documentElement.dataset.theme = theme.mode;
+  themeStyle.textContent = themeCss(theme.color);
+  themeMeta?.setAttribute('content', barColor(theme.color));
 }
 applyTheme();
 
-const app = { backend, store, auth, theme, aiSettings: new AiSettings(storage), router: null };
+const app = { backend, store, auth, theme, router: null };
 
 // ---------------------------------------------------------------- Pantalla actual
 
@@ -75,7 +92,6 @@ function routeScreen({ path, query }) {
   if (path === '/admin') return AdminScreen(app);
   if (path === '/admin/models') return ModelsScreen(app, { admin: true });
   if (path === '/settings') return SettingsScreen(app);
-  if (path === '/ai') return AiScreen(app, { modelId: query.model ?? null });
   if (path === '/group/new') return GroupEditScreen(app, { id: null, type: query.type === 'GLASS' ? 'GLASS' : 'CASE', variant: query.variant ?? 'NORMAL' });
   if ((m = path.match(/^\/group\/(.+)$/))) return GroupEditScreen(app, { id: decodeURIComponent(m[1]) });
   return null;

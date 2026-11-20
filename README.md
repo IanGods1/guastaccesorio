@@ -14,37 +14,19 @@ Usa **la misma base de datos de Firebase y las mismas contraseñas** que la app 
 
 ---
 
-## Buscar similares con IA (solo administrador)
+## Apariencia: cambiar el color de la app
 
-Botón **Buscar similares con IA** (en el inicio, y **Buscar más con IA** dentro del resultado de un modelo). Escribes un modelo, por ejemplo "iPhone 13", y la IA (Claude, de Anthropic) investiga qué otros modelos comparten el mismo **case** y/o el mismo **vidrio templado**. **No guarda nada sola: tú revisas y apruebas.**
+El botón **paleta** 🎨 (arriba a la derecha en el inicio, y **Configuración → Apariencia**) abre el selector:
 
-**Cómo busca**
-- Solo en sitios confiables (fichas oficiales de las marcas, GSMArena/Kimovil/PhoneArena y fabricantes de accesorios como Spigen, ESR, OtterBox…). La lista completa está en [`src/core/ai.js`](src/core/ai.js) y se ve en la pantalla.
-- Te muestra las medidas, las fuentes (con enlace para que las abras) y la cita donde se nombran los modelos.
+- **Color:** Azul marino (el de siempre), Azul, Turquesa, Verde, Morado, Granate, Naranja, Grafito, o **Otro** para elegir cualquier color con la rueda del teléfono. El cambio se ve al instante, con una vista previa.
+- **Modo:** Sistema, Claro u Oscuro.
+- Se guarda **en cada dispositivo**: cada persona (administrador o trabajador) elige el suyo; no cambia el de los demás.
+- Cualquier color que elijas genera sus propios tonos claros y oscuros, y el código **ajusta la intensidad para que el texto siempre se lea bien** (hay pruebas automáticas de contraste con 360 tonos).
+- También cambia el color de la barra del navegador del teléfono.
 
-**Cómo se calcula la confianza** (lo hace el código de la app, no la IA, para que no pueda "dar por confirmado" algo sin evidencia)
-- **Confirmada:** una fuente confiable que **de verdad apareció en la búsqueda** nombra al modelo y a los demás como compatibles con el mismo producto, **y** las medidas coinciden (case: alto y ancho ±0.3 mm, grosor ±0.4 mm; vidrio: ±0.5 mm y misma pantalla), **y** no hay diferencias avisadas.
-- **Probable:** hay indicios en fuentes confiables, pero faltan datos o hay diferencias (por ejemplo, el fabricante lo lista pero las medidas no coinciden exacto).
-- **Por verificar:** no hay evidencia suficiente. Se muestra, pero no queda marcado.
-- Se descartan los enlaces inventados (que no salieron de la búsqueda) y los de sitios fuera de la lista.
-- Solo los grupos **confirmados** quedan marcados de antemano. Guardar uno sin confirmar pide una segunda confirmación.
+La web tiene un diseño nuevo: buscador grande con degradado, accesos en mosaicos, avatares con el color de cada marca, pestañas tipo píldora, tarjetas suaves y animaciones discretas (se desactivan si el teléfono pide menos movimiento).
 
-> **Ningún resultado es 100% seguro.** Los fabricantes cambian medidas, cámaras y bordes entre versiones. Aun con "Confirmada", verifica con el producto físico la primera vez que lo vendas. La nota del grupo queda con la fecha y las fuentes.
-
-**Qué se guarda:** por cada grupo marcado, un grupo de compatibilidad con el modelo buscado + los modelos que dejes marcados. En vidrio eliges la clase (Normal por defecto, 9D, Privacy). Los modelos que ya existen se reutilizan.
-
-**Costo (lo pagas tú a Anthropic):** cada consulta cuesta aprox. **entre US$0.05 y US$0.60**: tokens (según el modelo) más US$0.01 por búsqueda web (máximo 3, 6 o 10 por consulta, en Configuración). Al terminar la app muestra el costo real estimado. Puede tardar de 30 segundos a 3 minutos.
-
-**Configurarla (una vez, en el dispositivo del administrador)**
-1. Entra a <https://console.anthropic.com>, crea una cuenta y en **Billing** carga saldo (por ejemplo US$5).
-2. En **Limits** pon un límite de gasto mensual.
-3. En **API keys → Create key** copia la llave (empieza con `sk-ant-`).
-4. En la app: **Configuración → Inteligencia artificial → Poner llave** y pégala.
-5. Ahí mismo puedes elegir el modelo: **Opus 5.5** (el más preciso, por defecto), **Sonnet 5.5** (más económico) o **Haiku 5.5** (el más barato, menos confiable para investigar).
-
-**Seguridad de la llave:** se guarda **solo en el navegador del administrador** (no en la nube ni en GitHub) y los trabajadores no la ven. Pero quien use ese navegador desbloqueado podría sacarla, y esta página comparte el dominio `iangods1.github.io` con otras páginas tuyas. Por eso: pon un **límite de gasto** en console.anthropic.com, no la pegues en dispositivos de otras personas, y si pierdes el dispositivo anúlala en **API keys → Delete**.
-
-**Si falla:** el mensaje explica la causa (llave inválida, sin saldo, búsqueda web desactivada en tu cuenta de Anthropic —en console.anthropic.com → Settings—, demasiadas consultas, sin internet).
+> Si en una versión anterior guardaste una llave de IA en este navegador, la web la borra sola. Si llegaste a crearla en console.anthropic.com, anúlala allí (API keys).
 
 ---
 
@@ -90,11 +72,12 @@ NODE_PATH=$(npm root -g) node e2e/smoke.cjs [carpeta-de-capturas]   # requiere P
 ```
 
 ```
-src/core/    Lógica sin dependencias: búsqueda, marcas, clases de vidrio, datos, CSV, Excel, contraseñas, IA (ai.js)
-src/ui/      Pantallas: acceso, buscador, resultados, modelos, administración, grupo, configuración
+src/core/    Lógica sin dependencias: búsqueda, marcas, clases de vidrio, datos, CSV, Excel, contraseñas
+src/ui/      Pantallas: acceso, buscador, resultados, modelos, administración, grupo, configuración, apariencia
+src/core/theme.js  Colores: genera los tonos claros y oscuros de cualquier color y cuida el contraste
 src/auth.js  Contraseñas, roles, sesión permanente, bloqueo
 src/backend-firebase.js  Acceso a Firebase · src/backend-memory.js  nube simulada (solo pruebas)
-test/        Pruebas automáticas · e2e/ pruebas completas en navegador (smoke.cjs y ai.cjs, con la API simulada) · build.mjs genera dist/
+test/        Pruebas automáticas · e2e/ prueba completa en navegador · build.mjs genera dist/
 ```
 
 La app Android está en el repositorio `my-proyect` (rama `claude/casematch-android-app-2a4r13`).

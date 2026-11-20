@@ -1,7 +1,21 @@
-// Pantalla principal: buscador con sugerencias.
-import { h, clear, icon, appBar, bigButton, emptyState } from './dom.js';
+// Pantalla principal: buscador con sugerencias y accesos rápidos.
+import { h, clear, icon, appBar, emptyState, avatar } from './dom.js';
 import { searchModels } from '../core/search.js';
 import { modelsList } from '../core/data.js';
+import { openAppearance } from './appearance.js';
+
+const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
+
+/** Mosaico de acceso rápido. */
+function tile({ title, sub, icon: name, onclick, primary = false }) {
+  return h(
+    'button',
+    { class: `tile${primary ? ' primary' : ''}`, type: 'button', onclick },
+    h('span', { class: 'tile-icon' }, icon(name, 26)),
+    h('span', { class: 'grow' }, h('span', { class: 'tile-title' }, title), h('br'), h('span', { class: 'tile-sub' }, sub)),
+    primary ? h('span', { class: 'chev' }, icon('chevron', 28)) : null,
+  );
+}
 
 export function HomeScreen(app) {
   const isAdmin = app.auth.role === 'ADMIN';
@@ -10,7 +24,7 @@ export function HomeScreen(app) {
   const input = h('input', {
     class: 'input',
     type: 'search',
-    placeholder: 'Buscar modelo (ej. iPhone 13)',
+    placeholder: 'Buscar modelo…',
     autocomplete: 'off',
     autocapitalize: 'none',
     autocorrect: 'off',
@@ -30,30 +44,48 @@ export function HomeScreen(app) {
       }
     },
   });
-  const clearBtn = h('button', { class: 'icon-btn clear', type: 'button', 'aria-label': 'Borrar búsqueda', hidden: true, onclick: () => {
-    query = '';
-    input.value = '';
-    renderBody();
-    input.focus();
-  } }, icon('close'));
+  const clearBtn = h(
+    'button',
+    {
+      class: 'icon-btn clear',
+      type: 'button',
+      'aria-label': 'Borrar búsqueda',
+      hidden: true,
+      onclick: () => {
+        query = '';
+        input.value = '';
+        renderBody();
+        input.focus();
+      },
+    },
+    icon('close'),
+  );
   const body = h('div', { class: 'stack' });
 
   function renderBody() {
     clearBtn.hidden = query === '';
     const models = modelsList(app.store.data);
     if (query.trim() === '') {
-      const nModels = models.length;
       const nGroups = Object.keys(app.store.data.groups).length;
+      const ready = app.store.ready;
       clear(
         body,
-        h('p', { class: 'muted' }, 'Escribe un modelo para ver qué otros teléfonos usan el mismo case o el mismo vidrio templado.'),
-        bigButton('Lista de modelos', () => app.router.go('/models'), { icon: 'list' }),
-        isAdmin ? bigButton('Administrar datos', () => app.router.go('/admin'), { icon: 'edit', outline: true }) : null,
-        isAdmin ? bigButton('Buscar similares con IA', () => app.router.go('/ai'), { icon: 'sparkle', outline: true }) : null,
-        isAdmin ? bigButton('Configuración', () => app.router.go('/settings'), { icon: 'settings', outline: true }) : null,
-        app.store.ready
-          ? h('p', { class: 'muted small' }, `${nModels} modelos registrados · ${nGroups} grupos de compatibilidad`)
-          : h('p', { class: 'muted small' }, 'Cargando datos…'),
+        h(
+          'div',
+          { class: 'tiles' },
+          tile({
+            primary: true,
+            icon: 'list',
+            title: 'Lista de modelos',
+            sub: ready ? plural(models.length, 'modelo registrado', 'modelos registrados') : 'Cargando datos…',
+            onclick: () => app.router.go('/models'),
+          }),
+          isAdmin
+            ? tile({ icon: 'edit', title: 'Administrar datos', sub: ready ? plural(nGroups, 'grupo', 'grupos') : '…', onclick: () => app.router.go('/admin') })
+            : null,
+          isAdmin ? tile({ icon: 'settings', title: 'Configuración', sub: 'Contraseñas y más', onclick: () => app.router.go('/settings') }) : null,
+        ),
+        h('p', { class: 'muted small center' }, 'Escribe un modelo arriba para ver qué otros teléfonos usan el mismo case o el mismo vidrio templado.'),
       );
       return;
     }
@@ -74,6 +106,7 @@ export function HomeScreen(app) {
         h(
           'button',
           { class: 'list-item suggestion', type: 'button', onclick: () => app.router.go(`/m/${m.id}`) },
+          avatar(m.brand),
           h('div', { class: 'grow' }, h('div', { class: 'li-title' }, m.name), h('div', { class: 'li-sub' }, m.brand)),
           icon('chevron'),
         ),
@@ -81,17 +114,26 @@ export function HomeScreen(app) {
     );
   }
 
+  const actions = [h('button', { class: 'icon-btn', type: 'button', 'aria-label': 'Apariencia', onclick: () => openAppearance(app) }, icon('palette'))];
+  if (isAdmin) actions.push(h('button', { class: 'icon-btn', type: 'button', 'aria-label': 'Configuración', onclick: () => app.router.go('/settings') }, icon('settings')));
+
   renderBody();
   return {
     el: h(
       'div',
       { class: 'screen' },
-      appBar({
-        title: 'Guastaccesorio',
-        subtitle: 'Compatibilidad de cases y vidrios',
-        actions: isAdmin ? [h('button', { class: 'icon-btn', type: 'button', 'aria-label': 'Configuración', onclick: () => app.router.go('/settings') }, icon('settings'))] : [],
-      }),
-      h('main', { class: 'content' }, h('div', { class: 'search-wrap' }, icon('search'), input, clearBtn), body),
+      h(
+        'div',
+        { class: 'hero-wrap' },
+        appBar({ title: 'Guastaccesorio', subtitle: 'Cases y vidrios templados', withLogo: true, flat: true, actions }),
+        h(
+          'div',
+          { class: 'hero' },
+          h('div', null, h('h2', null, '¿Qué modelo buscas?'), h('p', null, 'Mira qué case y qué vidrio le quedan.')),
+          h('div', { class: 'search-wrap' }, icon('search'), input, clearBtn),
+        ),
+      ),
+      h('main', { class: 'content' }, body),
     ),
     update: renderBody,
   };

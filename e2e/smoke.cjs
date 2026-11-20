@@ -31,7 +31,7 @@ const log = (m) => console.log(`  ✓ ${m}`);
   const errors = [];
   page.on('pageerror', (e) => errors.push(`pageerror: ${e.message}`));
   page.on('console', (m) => m.type() === 'error' && errors.push(`console: ${m.text()}`));
-  const shot = async (name) => shots && page.screenshot({ path: path.join(shots, `${String(++step).padStart(2, '0')}-${name}.png`) });
+  const shot = async (name) => shots && (await page.waitForTimeout(450), page.screenshot({ path: path.join(shots, `${String(++step).padStart(2, '0')}-${name}.png`) }));
   const text = (t, opts) => page.getByText(t, opts);
   const btn = (name, opts) => page.getByRole('button', { name, ...opts });
   const toastGone = () => page.waitForTimeout(150);
@@ -66,7 +66,7 @@ const log = (m) => console.log(`  ✓ ${m}`);
   await pw.nth(2).fill('trabajo-123');
   await pw.nth(3).fill('trabajo-123');
   await btn('Crear contraseñas').click();
-  await text('Compatibilidad de cases y vidrios').waitFor();
+  await text('¿Qué modelo buscas?').waitFor();
   await btn('Administrar datos').waitFor();
   log('contraseñas creadas y el administrador queda dentro con sus botones');
 
@@ -118,7 +118,9 @@ const log = (m) => console.log(`  ✓ ${m}`);
   log('las tres clases de vidrio muestran modelos distintos');
   // bidireccional: desde A55 aparece A54
   await page.goto(url + '#/models');
-  await text('Samsung (4)').waitFor();
+  const samsungHead = page.locator('.brand-head', { hasText: 'Samsung' });
+  await samsungHead.waitFor();
+  assert.equal((await samsungHead.locator('.count').innerText()).trim(), '4');
   await shot('lista-modelos');
 
   console.log('Configuración del administrador');
@@ -155,6 +157,44 @@ const log = (m) => console.log(`  ✓ ${m}`);
   assert.match(exported, /Vidrio templado,Vidrio 9D Moto,G54,,Motorola,9D/);
   log('importar con variante y exportar respaldo');
 
+  console.log('Apariencia');
+  const { tokens, barColor } = await import('../src/core/theme.js');
+  const navy = () => page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--navy').trim());
+  const themeColorMeta = () => page.evaluate(() => document.querySelector('meta[name=theme-color]').content);
+  await page.goto(url);
+  await shot('inicio-marino');
+  assert.equal((await navy()).toLowerCase(), tokens('marino', 'light')['--navy']);
+  await btn('Apariencia').click();
+  await text('Así se verá').waitFor();
+  await shot('apariencia');
+  await page.locator('.dialog').getByRole('button', { name: 'Verde' }).click();
+  assert.equal((await navy()).toLowerCase(), tokens('verde', 'light')['--navy']);
+  assert.equal(await themeColorMeta(), barColor('verde'));
+  assert.equal(await page.evaluate(() => localStorage.getItem('gc_color')), 'verde');
+  assert.equal(await page.locator('.dialog .swatch-item.on').count(), 1);
+  await shot('inicio-verde');
+  await page.locator('.dialog').getByRole('button', { name: 'Oscuro' }).click();
+  assert.equal(await page.evaluate(() => document.documentElement.dataset.theme), 'dark');
+  assert.equal((await navy()).toLowerCase(), tokens('verde', 'dark')['--navy']);
+  await shot('inicio-verde-oscuro');
+  await page.locator('.dialog input[type=color]').fill('#ff6600');
+  assert.equal(await page.evaluate(() => localStorage.getItem('gc_color')), '#ff6600');
+  assert.equal((await navy()).toLowerCase(), tokens('#ff6600', 'dark')['--navy']);
+  assert.equal(await page.locator('.dialog .swatch-item.on').count(), 1);
+  await page.locator('.dialog').getByRole('button', { name: 'Listo' }).click();
+  await page.reload();
+  await text('¿Qué modelo buscas?').waitFor();
+  assert.equal((await navy()).toLowerCase(), tokens('#ff6600', 'dark')['--navy']); // se conserva al recargar
+  await shot('inicio-naranja-personalizado');
+  await page.goto(url + '#/settings');
+  await btn('Cambiar color y modo').click();
+  await page.locator('.dialog').getByRole('button', { name: 'Marino' }).click();
+  await page.locator('.dialog').getByRole('button', { name: 'Sistema' }).click();
+  await page.locator('.dialog').getByRole('button', { name: 'Listo' }).click();
+  assert.equal((await navy()).toLowerCase(), tokens('marino', 'light')['--navy']);
+  assert.equal(await page.evaluate(() => document.documentElement.dataset.theme ?? null), null);
+  log('cambiar el color (de la lista o personalizado) y el modo funciona, se aplica al instante y se conserva');
+
   console.log('Trabajador');
   await page.goto(url + '#/settings');
   await btn('Cerrar sesión').first().click();
@@ -166,7 +206,7 @@ const log = (m) => console.log(`  ✓ ${m}`);
   await text('Contraseña incorrecta', { exact: true }).waitFor();
   await page.locator('input[type=password]').fill('trabajo-123');
   await btn('Entrar').click();
-  await text('Compatibilidad de cases y vidrios').waitFor();
+  await text('¿Qué modelo buscas?').waitFor();
   assert.equal(await btn('Administrar datos').count(), 0);
   assert.equal(await btn('Configuración').count(), 0);
   await shot('inicio-trabajador');
@@ -180,14 +220,14 @@ const log = (m) => console.log(`  ✓ ${m}`);
   for (const route of ['#/admin', '#/settings', '#/group/new', '#/admin/models']) {
     await page.goto(url + route);
     await page.reload();
-    await text('Compatibilidad de cases y vidrios').waitFor();
+    await text('¿Qué modelo buscas?').waitFor();
   }
   log('el trabajador no ve ni puede abrir las pantallas de administración');
 
   // Sesión permanente: reabrir la app no pide contraseña
   await page.goto(url);
   await page.reload();
-  await text('Compatibilidad de cases y vidrios').waitFor();
+  await text('¿Qué modelo buscas?').waitFor();
   assert.equal(await btn('Entrar').count(), 0);
   assert.equal(await page.getByText('Cerrar sesión').count(), 0);
   log('sesión permanente del trabajador, sin botón de cerrar sesión');
@@ -207,7 +247,7 @@ const log = (m) => console.log(`  ✓ ${m}`);
   await text('Contraseña incorrecta', { exact: true }).waitFor();
   await page.locator('input[type=password]').fill('nueva-clave');
   await btn('Entrar').click();
-  await text('Compatibilidad de cases y vidrios').waitFor();
+  await text('¿Qué modelo buscas?').waitFor();
   log('al cambiar la contraseña se cierra la sesión del trabajador y la nueva funciona');
 
   console.log('Bloqueo por intentos');

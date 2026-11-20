@@ -40,7 +40,7 @@ export function AdminScreen(app) {
       groups.map((g) =>
         h(
           'div',
-          { class: 'card' },
+          { class: `card group-card ${g.type === 'GLASS' ? 'glass' : 'case'}` },
           h(
             'div',
             { class: 'list-item', style: { alignItems: 'flex-start' } },

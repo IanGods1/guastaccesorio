@@ -44,7 +44,8 @@ const PATHS = {
   info: 'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z',
   warning: 'M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z',
   check: 'M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z',
-  sparkle: 'M12 2l2.4 6.6L21 11l-6.6 2.4L12 20l-2.4-6.6L3 11l6.6-2.4L12 2zm7 12l1 2.5 2.5 1-2.5 1-1 2.5-1-2.5-2.5-1 2.5-1 1-2.5z',
+  palette:
+    'M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9c.83 0 1.5-.67 1.5-1.5 0-.39-.15-.74-.39-1.01-.23-.26-.38-.61-.38-.99 0-.83.67-1.5 1.5-1.5H16c2.76 0 5-2.24 5-5 0-4.42-4.03-8-9-8zm-5.5 9c-.83 0-1.5-.67-1.5-1.5S5.67 9 6.5 9 8 9.67 8 10.5 7.33 12 6.5 12zm3-4C8.67 8 8 7.33 8 6.5S8.67 5 9.5 5s1.5.67 1.5 1.5S10.33 8 9.5 8zm5 0c-.83 0-1.5-.67-1.5-1.5S13.67 5 14.5 5s1.5.67 1.5 1.5S15.33 8 14.5 8zm3 4c-.83 0-1.5-.67-1.5-1.5S16.67 9 17.5 9s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z',
 };
 
 export function icon(name, size = 24) {
@@ -54,12 +55,51 @@ export function icon(name, size = 24) {
   return span;
 }
 
+// ---------------------------------------------------------------- Marca y logo
+
+const BRAND_COLORS = {
+  Apple: '#4b5563', Samsung: '#1d4ed8', Xiaomi: '#ea580c', Motorola: '#0284c7', Huawei: '#dc2626',
+  Honor: '#0e7490', Google: '#16a34a', OnePlus: '#be123c', Oppo: '#15803d', Realme: '#a16207',
+  Vivo: '#2563eb', Nokia: '#0369a1', Sony: '#374151', LG: '#b91c1c', ZTE: '#0e7490',
+  Infinix: '#047857', Tecno: '#4f46e5', Alcatel: '#7c3aed', TCL: '#c2410c', Nothing: '#525252',
+};
+
+/** Color propio de cada marca (para las que no están en la lista, uno fijo según su nombre). */
+export function brandColor(brand) {
+  if (BRAND_COLORS[brand]) return BRAND_COLORS[brand];
+  let hash = 0;
+  for (const ch of String(brand ?? '')) hash = (hash * 31 + ch.charCodeAt(0)) % 360;
+  return `hsl(${hash} 45% 38%)`;
+}
+
+/** Círculo con la inicial de la marca. */
+export function avatar(brand, size = '') {
+  const text = brand && brand !== 'Otras' ? brand.charAt(0).toUpperCase() : '?';
+  return h('span', { class: `avatar${size ? ` ${size}` : ''}`, style: { background: brandColor(brand) }, 'aria-hidden': 'true' }, text);
+}
+
+/** Logo: dos teléfonos con una marca de verificación. Usa los colores del tema. */
+export function logo(size = 40) {
+  const span = document.createElement('span');
+  span.className = 'icon';
+  span.innerHTML =
+    `<svg viewBox="0 0 64 64" width="${size}" height="${size}" aria-hidden="true">` +
+    '<rect x="2" y="2" width="60" height="60" rx="18" fill="rgba(255,255,255,0.14)"/>' +
+    '<rect x="25" y="13" width="23" height="38" rx="5" fill="#fff" fill-opacity="0.5"/>' +
+    '<rect x="17" y="17" width="23" height="38" rx="5" fill="#fff"/>' +
+    '<circle cx="22" cy="22" r="2" fill="#0a2343"/>' +
+    '<path d="M22 38l5 5 9-11" fill="none" stroke="#2f80ed" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>' +
+    '</svg>';
+  return span;
+}
+
 // ---------------------------------------------------------------- Componentes
 
-export function appBar({ title, subtitle, onBack, actions = [] }) {
+export function appBar({ title, subtitle, onBack, actions = [], flat = false, withLogo = false }) {
   return h(
     'header',
-    { class: 'appbar' },
+    { class: `appbar${flat ? ' flat' : ''}` },
+    withLogo ? h('div', { class: 'appbar-logo' }, logo(38)) : null,
     onBack ? h('button', { class: 'icon-btn', 'aria-label': 'Volver', onclick: onBack }, icon('back')) : null,
     h('div', { class: 'appbar-title' }, h('div', { class: 'at' }, title), subtitle ? h('div', { class: 'as' }, subtitle) : null),
     ...actions,
@@ -80,7 +120,7 @@ export function emptyState(text, detail) {
 }
 
 export function noteBox(note) {
-  return h('div', { class: 'note' }, `Nota: ${note}`);
+  return h('div', { class: 'note' }, icon('info', 20), h('span', null, `Nota: ${note}`));
 }
 
 /** Fila de botones grandes para elegir una opción. Devuelve {el, refresh}. */

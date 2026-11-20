@@ -1,8 +1,14 @@
 // Pantallas de acceso: primer uso (crear contraseñas), ingreso con un solo campo y "sin internet".
-import { h, icon, passwordField, bigButton } from './dom.js';
+import { h, passwordField, bigButton, logo } from './dom.js';
 import { validateNewPassword, MIN_PASSWORD_LENGTH } from '../auth.js';
 
-const shell = (...children) => h('div', { class: 'screen' }, h('main', { class: 'auth' }, ...children));
+const shell = (...children) =>
+  h(
+    'div',
+    { class: 'screen' },
+    h('div', { class: 'auth-hero' }, logo(80), h('h1', null, 'Guastaccesorio')),
+    h('main', { class: 'auth' }, ...children),
+  );
 
 export function LoadingScreen() {
   return { el: shell(h('div', { class: 'spinner', 'aria-label': 'Cargando' })) };
@@ -57,8 +63,6 @@ export function LoginScreen(app, message) {
   refresh();
   return {
     el: shell(
-      h('div', { class: 'lock' }, icon('lock', 56)),
-      h('h1', null, 'Guastaccesorio'),
       h('p', { class: 'center muted' }, 'Escribe tu contraseña para entrar'),
       message ? h('div', { class: 'banner' }, message) : null,
       field.el,
@@ -122,8 +126,6 @@ export function SetupScreen(app) {
 export function NeedsInternetScreen(app, message) {
   return {
     el: shell(
-      h('div', { class: 'lock' }, icon('warning', 56)),
-      h('h1', null, 'Guastaccesorio'),
       h('p', { class: 'center bold' }, message),
       bigButton('Reintentar', () => app.auth.retry()),
     ),
