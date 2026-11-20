@@ -31,6 +31,7 @@ export function parseWikidata(json, { max = 150 } = {}) {
     const label = b.itemLabel?.value ?? '';
     const date = (b.date?.value ?? '').slice(0, 10);
     if (!label || /^Q\d+$/.test(label) || !/^\d{4}-\d{2}-\d{2}$/.test(date)) continue;
+    if (date.endsWith('-01-01')) continue; // Wikidata guarda "solo el año" como 1 de enero: no es una fecha real de lanzamiento
     const name = cleanName(label);
     if (!/\d/.test(name) || name.length > 40) continue; // series sin número ("iPhone") no sirven
     let brand = detect(name);

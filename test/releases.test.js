@@ -16,6 +16,7 @@ test('releases: filtra, limpia, ordena y quita repetidos', () => {
         row('Q12345', 'Apple Inc.', '2025-01-01T00:00:00Z'), // sin etiqueta
         row('Fairphone 5', 'Fairphone', '2023-08-30T00:00:00Z'), // marca no popular
         row('Pixel 9', 'Google', 'basura'),
+        row('iPhone 18 Pro', 'Apple Inc.', '2026-01-01T00:00:00Z'), // solo año: se descarta
         row('Redmi Note 14', 'Xiaomi', '2024-12-10T00:00:00Z'),
       ],
     },
