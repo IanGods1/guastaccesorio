@@ -8,6 +8,7 @@ on:
 
 permissions:
   contents: write
+  actions: write
 
 jobs:
   novedades:
@@ -20,6 +21,8 @@ jobs:
       - name: Descargar lanzamientos
         run: node scripts/fetch-phones.mjs
       - name: Guardar si hay cambios
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           if [ -n "$(git status --porcelain data/novedades.json)" ]; then
             git config user.name "github-actions[bot]"
@@ -27,4 +30,6 @@ jobs:
             git add data/novedades.json
             git commit -m "Teléfonos nuevos: actualización automática"
             git push
+            # un push hecho con el token del flujo no dispara otros flujos: se pide la publicación a mano
+            gh workflow run publicar.yml --ref main
           fi

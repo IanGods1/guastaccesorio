@@ -30,3 +30,11 @@ test('releases: filtra, limpia, ordena y quita repetidos', () => {
   assert.equal(cleanName('Samsung  Galaxy A56'), 'Galaxy A56');
   assert.deepEqual(parseWikidata({}), []);
 });
+
+test('releases: quita el nombre de cualquier marca popular repetido', () => {
+  assert.equal(cleanName('Huawei Mate 80'), 'Huawei Mate 80'); // sin la marca ya no se reconocería
+  assert.equal(cleanName('Vivo X100'), 'Vivo X100');
+  assert.equal(cleanName('Apple iPhone 16'), 'iPhone 16');
+  assert.equal(cleanName('Google Pixel 9'), 'Pixel 9');
+  assert.equal(cleanName('Apple'), 'Apple');
+});

@@ -8,7 +8,8 @@ export const POPULAR = ['Apple', 'Samsung', 'Xiaomi', 'Motorola', 'Huawei', 'Hon
 /** Consulta a Wikidata: teléfonos con fabricante y fecha, desde `desde` (AAAA-MM-DD). */
 export function sparql(desde) {
   return `SELECT ?item ?itemLabel ?mfrLabel ?date WHERE {
-  ?item wdt:P31/wdt:P279* wd:Q19723451 .
+  VALUES ?clase { wd:Q19723451 wd:Q22645 wd:Q17517 }
+  ?item wdt:P31/wdt:P279* ?clase .
   ?item wdt:P176 ?mfr .
   { ?item wdt:P577 ?date } UNION { ?item wdt:P571 ?date }
   FILTER(?date >= "${desde}T00:00:00Z"^^xsd:dateTime)
@@ -16,12 +17,11 @@ export function sparql(desde) {
 } LIMIT 1500`;
 }
 
-/** Quita el nombre del fabricante repetido al principio ("Samsung Galaxy S25" → "Galaxy S25"). */
+/** Quita el nombre del fabricante repetido al principio ("Samsung Galaxy S25" → "Galaxy S25"), pero conserva la marca si no, ej. "Huawei Mate 80". */
 export function cleanName(label) {
-  return label
-    .replace(/^(samsung|apple|motorola|xiaomi)\s+(?=\S)/i, '')
-    .replace(/\s+/g, ' ')
-    .trim();
+  const limpio = label.replace(/\s+/g, ' ').trim();
+  const sin = limpio.replace(new RegExp(`^(${POPULAR.join('|')}|samsung electronics)\\s+(?=\\S)`, 'i'), '');
+  return /\d/.test(sin) && detect(sin) !== OTHER ? sin : limpio; // solo si sin la marca se sigue reconociendo (Galaxy, iPhone, Pixel…)
 }
 
 /** @returns {{name:string, brand:string, date:string}[]} más nuevos primero, sin repetidos, solo marcas populares */
