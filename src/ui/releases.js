@@ -56,7 +56,7 @@ export function ReleasesScreen(app) {
             'div',
             { class: 'list-item' },
             avatar(p.brand),
-            h('div', { class: 'grow' }, h('div', { class: 'li-title' }, p.name), h('div', { class: 'li-sub' }, `${p.brand} · ${fmt(p.date)}`)),
+            h('div', { class: 'grow' }, h('div', { class: 'li-title' }, p.name), h('div', { class: 'li-sub' }, `${p.brand} · ${p.date ? fmt(p.date) : p.year}`)),
             exists(p, k)
               ? h('span', { class: 'badge glass' }, 'En tu lista')
               : isAdmin
@@ -65,7 +65,7 @@ export function ReleasesScreen(app) {
           ),
         ),
       ),
-      feed.updated ? h('p', { class: 'muted small center' }, `Actualizado el ${fmt(feed.updated)} · Fuente: ${feed.source ?? 'Wikidata'}. Puede faltar algún modelo muy reciente.`) : null,
+      feed.updated ? h('p', { class: 'muted small center' }, `Actualizado el ${fmt(feed.updated)} · Fuente: ${feed.source ?? 'Wikidata y Wikipedia'}. Puede faltar algún modelo muy reciente.`) : null,
     );
   }
 

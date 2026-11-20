@@ -43,3 +43,33 @@ export function parseWikidata(json, { max = 150 } = {}) {
   }
   return [...seen.values()].sort((a, b) => b.date.localeCompare(a.date) || a.name.localeCompare(b.name)).slice(0, max);
 }
+
+/** Títulos de Wikipedia ("Mobile phones introduced in AAAA") → lista, solo con el año. */
+export function parseWikipedia(titles, year) {
+  const out = [];
+  for (const raw of titles ?? []) {
+    const name = cleanName(
+      raw
+        .replace(/\s*\((smartphone|phone|mobile phone|\d{4} smartphone)\)$/i, '')
+        .replace(/^IPhone\b/, 'iPhone')
+        .replace(/^IPad\b/, 'iPad'),
+    );
+    if (!/\d/.test(name) || name.length > 40 || /^(list|comparison|timeline)\b/i.test(name)) continue;
+    const brand = detect(name);
+    if (!POPULAR.includes(brand)) continue;
+    out.push({ name, brand, year });
+  }
+  return out;
+}
+
+/** Une varias listas: sin repetidos (gana la que tiene fecha exacta); más nuevos primero. */
+export function mergeReleases(lists, { max = 200 } = {}) {
+  const seen = new Map();
+  for (const p of lists.flat()) {
+    const key = normalize(p.name);
+    const prev = seen.get(key);
+    if (!prev || (!prev.date && p.date)) seen.set(key, p);
+  }
+  const when = (p) => p.date ?? `${p.year}-06-30`;
+  return [...seen.values()].sort((a, b) => when(b).localeCompare(when(a)) || a.name.localeCompare(b.name)).slice(0, max);
+}

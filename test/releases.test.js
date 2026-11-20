@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { parseWikidata, cleanName, POPULAR } from '../src/core/releases.js';
+import { parseWikidata, parseWikipedia, mergeReleases, cleanName, POPULAR } from '../src/core/releases.js';
 
 const row = (label, mfr, date) => ({ itemLabel: { value: label }, mfrLabel: { value: mfr }, date: { value: date } });
 
@@ -38,4 +38,12 @@ test('releases: quita el nombre de cualquier marca popular repetido', () => {
   assert.equal(cleanName('Apple iPhone 16'), 'iPhone 16');
   assert.equal(cleanName('Google Pixel 9'), 'Pixel 9');
   assert.equal(cleanName('Apple'), 'Apple');
+});
+
+test('releases: Wikipedia y unir listas', () => {
+  const wp = parseWikipedia(['IPhone 17', 'Samsung Galaxy S25 (smartphone)', 'Moto G55', 'Pixel 9 Pro', 'List of Samsung phones 2025', 'Fairphone 5', 'Redmi Note'], 2025);
+  assert.deepEqual(wp.map((p) => p.name), ['iPhone 17', 'Galaxy S25', 'Moto G55', 'Pixel 9 Pro']);
+  const m = mergeReleases([[{ name: 'Galaxy S25', brand: 'Samsung', date: '2025-01-22', year: 2025 }], wp]);
+  assert.equal(m.filter((p) => p.name === 'Galaxy S25').length, 1);
+  assert.equal(m.find((p) => p.name === 'Galaxy S25').date, '2025-01-22'); // gana la fecha exacta
 });
