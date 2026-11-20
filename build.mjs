@@ -26,6 +26,7 @@ writeFileSync(`${out}/app.css`, css.code);
 
 cpSync('index.html', `${out}/index.html`);
 cpSync('manifest.webmanifest', `${out}/manifest.webmanifest`);
+cpSync('data/novedades.json', `${out}/novedades.json`);
 cpSync('icons', `${out}/icons`, { recursive: true });
 writeFileSync(`${out}/sw.js`, readFileSync('sw.js', 'utf8').replace('__BUILD__', buildId));
 // GitHub Pages: sin procesamiento Jekyll

@@ -80,6 +80,7 @@ export function HomeScreen(app) {
             sub: ready ? plural(models.length, 'modelo registrado', 'modelos registrados') : 'Cargando datos…',
             onclick: () => app.router.go('/models'),
           }),
+          tile({ wide: true, icon: 'phone', title: 'Teléfonos nuevos', sub: 'Lanzamientos por marca, al día', onclick: () => app.router.go('/releases') }),
           tile({ wide: true, icon: 'star', title: 'Modelos nuevos', sub: 'Los últimos que se agregaron', onclick: () => app.router.go('/new') }),
           isAdmin ? tile({ wide: true, icon: 'paste', title: 'Pegar información', sub: 'De una IA a tu lista, con un toque', onclick: () => app.router.go('/paste') }) : null,
           isAdmin

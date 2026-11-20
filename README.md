@@ -30,6 +30,10 @@ La web tiene un diseño nuevo: buscador grande con degradado, accesos en mosaico
 
 ---
 
+## Teléfonos nuevos (automático)
+
+El botón **Teléfonos nuevos** muestra los lanzamientos de las marcas populares (Apple, Samsung, Xiaomi, Motorola, Huawei, Honor, Google, OnePlus, Oppo, Realme, Vivo, Nokia, Infinix, Tecno), con botones por marca. Cada día, GitHub busca solo los nuevos en Wikidata (flujo "Buscar teléfonos nuevos"), guarda `data/novedades.json` y vuelve a publicar la web. Para buscar ya: Actions → "Buscar teléfonos nuevos" → Run workflow. El administrador puede agregar uno o todos a su lista de modelos con un toque. Wikidata puede tardar en tener un modelo recién salido.
+
 ## Modelos nuevos
 
 En el inicio, el botón **Modelos nuevos** (para todos) muestra los últimos 30 modelos que se agregaron, el más reciente arriba. Arriba hay botones por marca (Todas, Apple, Samsung…) para ver solo los nuevos de una marca. Tocar uno abre su compatibilidad.
