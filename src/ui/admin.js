@@ -167,6 +167,7 @@ export function AdminScreen(app) {
         'main',
         { class: 'content' },
         bigButton('Nuevo grupo de compatibilidad', newGroupDialog, { icon: 'add' }),
+        bigButton('Escanear lista (foto)', () => app.router.go('/scan'), { icon: 'phone' }),
         bigButton('Pegar información de una IA', () => app.router.go('/paste'), { icon: 'paste', outline: true }),
         bigButton('Administrar modelos', () => app.router.go('/admin/models'), { icon: 'list', outline: true }),
         h('div', { class: 'row' }, bigButton('Importar', () => fileInput.click(), { outline: true }), bigButton('Exportar', exportDialog, { outline: true })),

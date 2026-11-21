@@ -82,6 +82,7 @@ export function HomeScreen(app) {
           }),
           tile({ wide: true, icon: 'phone', title: 'Teléfonos nuevos', sub: 'Lanzamientos por marca, al día', onclick: () => app.router.go('/releases') }),
           tile({ wide: true, icon: 'star', title: 'Modelos nuevos', sub: 'Los últimos que se agregaron', onclick: () => app.router.go('/new') }),
+          isAdmin ? tile({ wide: true, icon: 'phone', title: 'Escanear lista', sub: 'Foto de tu lista → grupos, solos', onclick: () => app.router.go('/scan') }) : null,
           isAdmin ? tile({ wide: true, icon: 'paste', title: 'Pegar información', sub: 'De una IA a tu lista, con un toque', onclick: () => app.router.go('/paste') }) : null,
           isAdmin
             ? tile({ icon: 'edit', title: 'Administrar datos', sub: ready ? plural(nGroups, 'grupo', 'grupos') : '…', onclick: () => app.router.go('/admin') })

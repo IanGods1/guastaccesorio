@@ -1,14 +1,14 @@
 // Pegar información: le preguntas a una IA, copias su respuesta, la pegas aquí y se agrega
 // (y se sube a la nube) con un toque, o solo al pegar si activas la opción. Siempre se puede deshacer.
 import { h, clear, icon, appBar, bigButton, emptyState, toast, openDialog } from './dom.js';
-import { modelsList, saveGroup } from '../core/data.js';
+import { modelsList } from '../core/data.js';
+import { commitParsed, restoreSnapshot } from '../core/commit.js';
 import { parsePasted, buildPrompt, kindLabel, similarExisting } from '../core/paste.js';
 import { resolveModel } from '../core/naming.js';
 import { photoToText, PHOTO_KINDS } from '../core/photo.js';
 import { readPhoto } from './photo-ocr.js';
 
 const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
-const clone = (x) => JSON.parse(JSON.stringify(x));
 
 /** Copia texto al portapapeles (con alternativa para navegadores que lo limitan). */
 async function copyText(text) {
@@ -150,33 +150,11 @@ export function PasteScreen(app) {
   function known() {
     return modelsList(store.data).map((m) => ({ name: m.name, brand: m.brand }));
   }
-  function pick(name, brand) {
-    const r = resolveModel(name, brand, known());
-    return { name: r?.name ?? name, brand: r?.brand ?? brand };
-  }
-
   function commit() {
-    const parsed = state.parsed;
-    const chosen = parsed.groups.filter((_, i) => state.selected[i]);
-    if (chosen.length === 0 && parsed.loose.length === 0) return;
-    const snapshot = clone(store.data);
-    const modelsBefore = Object.keys(snapshot.models).length;
-    const problems = [];
-    let added = 0;
-    store.apply((draft) => {
-      for (const g of chosen) {
-        const res = saveGroup(draft, { id: null, type: g.type, variant: g.variant, name: g.name, note: g.note, models: g.models.map((m) => pick(m.name, m.brand)) });
-        if (res.error) problems.push(`${kindLabel(g)}: ${res.error}`);
-        else added++;
-      }
-      for (const m of parsed.loose) {
-        const p = pick(m.name, m.brand);
-        draft.getOrCreateModel(p.name, p.brand || null, false);
-      }
-      return {};
-    });
-    state.snapshot = snapshot;
-    state.result = { added, newModels: Object.keys(store.data.models).length - modelsBefore, problems };
+    const res = commitParsed(store, state.parsed, state.selected);
+    if (!res) return;
+    state.snapshot = res.snapshot;
+    state.result = { added: res.added, newModels: res.newModels, problems: res.problems };
     state.phase = 'done';
     render();
   }
@@ -184,11 +162,7 @@ export function PasteScreen(app) {
   function undo() {
     const snap = state.snapshot;
     if (!snap) return;
-    store.apply((draft) => {
-      draft.data.models = clone(snap.models);
-      draft.data.groups = clone(snap.groups);
-      return {};
-    });
+    restoreSnapshot(store, snap);
     state.snapshot = null;
     state.phase = 'edit';
     toast('Deshecho: se quitó lo que se había agregado');

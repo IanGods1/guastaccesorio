@@ -17,6 +17,7 @@ import { AdminScreen } from './ui/admin.js';
 import { GroupEditScreen } from './ui/group-edit.js';
 import { SettingsScreen } from './ui/settings.js';
 import { PasteScreen } from './ui/paste.js';
+import { ScanScreen } from './ui/scan.js';
 import { themeCss, barColor, DEFAULT_COLOR } from './core/theme.js';
 
 /* global __TEST__ */
@@ -98,6 +99,7 @@ function routeScreen({ path, query }) {
   if (path === '/admin/models') return ModelsScreen(app, { admin: true });
   if (path === '/settings') return SettingsScreen(app);
   if (path === '/paste') return PasteScreen(app);
+  if (path === '/scan') return ScanScreen(app);
   if (path === '/group/new') return GroupEditScreen(app, { id: null, type: query.type === 'GLASS' ? 'GLASS' : 'CASE', variant: query.variant ?? 'NORMAL' });
   if ((m = path.match(/^\/group\/(.+)$/))) return GroupEditScreen(app, { id: decodeURIComponent(m[1]) });
   return null;
