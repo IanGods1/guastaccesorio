@@ -40,6 +40,8 @@ const server = http.createServer((q, r) => {
   await shot('1-inicio');
   console.log('  ✓ el administrador ve el botón y la pantalla Escanear lista');
 
+  assert.equal(await p.getByLabel(/Subir solo, sin revisar/).isChecked(), false); // por omisión se revisa antes
+  await p.getByLabel(/Subir solo, sin revisar/).check();
   await btn('Vidrio 9D', { exact: true }).click();
   await file().setInputFiles(img);
   await p.getByText('Listo, ya se subió').waitFor({ timeout: 120000 });

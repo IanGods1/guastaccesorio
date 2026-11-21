@@ -116,7 +116,7 @@ export function PasteScreen(app) {
           status.textContent = msg;
         });
         const prefix = PHOTO_KINDS.find((k) => k.id === kind.value).prefix;
-        const res = photoToText(text, prefix);
+        const res = photoToText(text, prefix, { known: modelsList(store.data).map((m) => m.name) });
         if (res.groups === 0) {
           status.textContent = 'No encontré grupos de modelos en la foto. Prueba con una foto más cerca, recta y con buena luz.';
           bar.hidden = true;

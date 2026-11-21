@@ -2,6 +2,9 @@
 // "Case: modelo, modelo, modelo" que entiende "Pegar información". Cada línea con varios modelos,
 // o cada bloque de líneas separado por una línea en blanco, es un grupo de compatibles.
 
+import { detect, OTHER } from './brands.js';
+import { normalize } from './text.js';
+
 export const PHOTO_KINDS = [
   { id: 'case', label: 'Case', prefix: 'Case' },
   { id: 'normal', label: 'Vidrio normal', prefix: 'Vidrio normal' },
@@ -27,15 +30,30 @@ const SEP = /\s*(?:[,;+=|]|\s[-–—/]\s)\s*/;
 
 const splitLine = (line) => line.split(SEP).map((s) => s.trim()).filter(Boolean);
 
-/** Un modelo plausible: tiene al menos un número o una letra, y no es solo ruido. */
-const plausible = (s) => /[a-z0-9]/i.test(s) && s.length >= 2 && s.length <= 40 && /\d/.test(s);
+/** Códigos cortos que se escriben solos en las listas: A54, G84, S24, X100, Y31d, A06. */
+const SHORT_CODE = /^[A-Za-z]{1,2}\s?\d{2,3}[A-Za-z]{0,2}$/;
+
+/**
+ * Un modelo creíble: lleva una marca o línea conocida (iPhone, Galaxy, Redmi…), es un código corto (A54),
+ * o ya existe en tu lista. Todo lo demás es ruido de la lectura y se descarta.
+ */
+function makePlausible(known) {
+  const set = new Set((known ?? []).map((n) => normalize(n)));
+  return (s) => {
+    if (s.length < 2 || s.length > 40 || !/\d/.test(s) || /[^A-Za-z0-9 +.\-()]/.test(s)) return false;
+    if (set.has(normalize(s))) return true;
+    if (SHORT_CODE.test(s)) return true;
+    return detect(s) !== OTHER && s.split(' ').length <= 5;
+  };
+}
 
 /**
  * @param {string} ocr texto leído de la foto
  * @param {string} prefix "Case", "Vidrio 9D"…
  * @returns {{ text: string, groups: number, lines: number }}
  */
-export function photoToText(ocr, prefix) {
+export function photoToText(ocr, prefix, { known = [] } = {}) {
+  const plausible = makePlausible(known);
   const raw = (ocr ?? '').split(/\r?\n/).map((l) => l.trim());
   const blocks = [];
   let cur = [];

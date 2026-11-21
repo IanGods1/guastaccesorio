@@ -5,13 +5,14 @@ import { parsePasted, kindLabel } from '../core/paste.js';
 import { photoToText, PHOTO_KINDS } from '../core/photo.js';
 import { commitParsed, restoreSnapshot } from '../core/commit.js';
 import { readPhoto } from './photo-ocr.js';
+import { modelsList } from '../core/data.js';
 
 const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
 
 export function ScanScreen(app) {
   const store = app.store;
   const state = { kind: app.storage.getItem('gc_scan_kind') || 'case', phase: 'start', progress: 0, msg: '', text: '', res: null, error: '' };
-  const autoOn = () => app.storage.getItem('gc_scan_auto') !== '0'; // por omisión, sube solo
+  const autoOn = () => app.storage.getItem('gc_scan_auto') === '1'; // por omisión se revisa antes de subir
   const root = h('div', { class: 'screen' });
 
   const camera = h('input', { type: 'file', accept: 'image/*', capture: 'environment', hidden: true, onchange: (e) => pick(e.target) });
@@ -32,7 +33,7 @@ export function ScanScreen(app) {
         updateProgress();
       });
       const prefix = PHOTO_KINDS.find((k) => k.id === state.kind).prefix;
-      const out = photoToText(raw, prefix);
+      const out = photoToText(raw, prefix, { known: modelsList(store.data).map((m) => m.name) });
       if (out.groups === 0) {
         state.phase = 'start';
         state.error = 'No encontré grupos de modelos en la foto. Prueba con la foto más cerca, recta y con buena luz, y que cada renglón tenga varios modelos.';
@@ -138,7 +139,7 @@ export function ScanScreen(app) {
           h('p', { class: 'small muted' }, 'Cada renglón con varios modelos compatibles (separados por coma, "/", "-" o "+") será un grupo en la categoría elegida.'),
           bigButton('Tomar foto', () => camera.click(), { icon: 'phone' }),
           bigButton('Elegir de la galería', () => gallery.click(), { outline: true, icon: 'list' }),
-          h('label', { class: 'check' }, autoBox, h('span', null, 'Subir solo, sin revisar antes (siempre podrás deshacer)')),
+          h('label', { class: 'check' }, autoBox, h('span', null, 'Subir solo, sin revisar antes (solo si tus fotos se leen bien)')),
           state.error ? h('p', { class: 'warn' }, state.error) : null,
         ),
         h('p', { class: 'muted small center' }, 'Funciona mejor con la foto recta, cerca y con buena luz. La primera vez descarga el lector (unos 10 MB).'),

@@ -26,3 +26,11 @@ test('photo: ruido y texto vacío', () => {
   assert.equal(photoToText('', 'Case').groups, 0);
   assert.equal(photoToText('~~ ,, \n lista de precios', 'Case').groups, 0);
 });
+
+test('photo: el ruido de una mala lectura no se convierte en modelos', () => {
+  const basura = ['Bete ie 4 ff h k L-—', 'i I\'S a BN i i 1%', '8S, rience 3', 'iy The Worlg ih rh FAR TY i 1 E', 'v ARE Reo Tempercg igs Poi alll 0', 'N OH se 6, f ~ £ 06 TEE'].join('\n');
+  assert.equal(photoToText(basura, 'Vidrio 9D').groups, 0);
+  // lo que ya existe en tu lista sí se acepta, y una marca conocida también
+  assert.equal(photoToText('Nokia 110, Pixel 9a', 'Case').groups, 1);
+  assert.equal(photoToText('Zeta Uno 5, Zeta Dos 6', 'Case', { known: ['Zeta Uno 5', 'Zeta Dos 6'] }).groups, 1);
+});

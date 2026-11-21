@@ -56,7 +56,9 @@ export async function readPhoto(file, onProgress = () => {}) {
   try {
     await worker.setParameters({ tessedit_pageseg_mode: '6', preserve_interword_spaces: '1' });
     const { data } = await worker.recognize(canvas);
-    return data.text;
+    // Solo se conservan las líneas que el lector leyó con seguridad: lo dudoso es mejor no agregarlo.
+    const good = (data.lines ?? []).filter((l) => l.confidence >= 60).map((l) => l.text.trim()).filter(Boolean);
+    return good.length ? good.join('\n') : (data.lines?.length ? '' : data.text);
   } finally {
     await worker.terminate();
   }
