@@ -34,10 +34,6 @@ La web tiene un diseño nuevo: buscador grande con degradado, accesos en mosaico
 
 El botón **Teléfonos nuevos** muestra los lanzamientos de las marcas populares (Apple, Samsung, Xiaomi, Motorola, Huawei, Honor, Google, OnePlus, Oppo, Realme, Vivo, Nokia, Infinix, Tecno), con botones por marca. Cada día, GitHub busca solo los nuevos en Wikidata (flujo "Buscar teléfonos nuevos"), guarda `data/novedades.json` y vuelve a publicar la web. Para buscar ya: Actions → "Buscar teléfonos nuevos" → Run workflow. El administrador puede agregar uno o todos a su lista de modelos con un toque. Wikidata puede tardar en tener un modelo recién salido.
 
-## Modelos nuevos
-
-En el inicio, el botón **Modelos nuevos** (para todos) muestra los últimos 30 modelos que se agregaron, el más reciente arriba. Arriba hay botones por marca (Todas, Apple, Samsung…) para ver solo los nuevos de una marca. Tocar uno abre su compatibilidad.
-
 ## Escanear lista (foto)
 
 Solo para el administrador: botón **Escanear lista** en el inicio (y en Administrar datos). Elige el tipo de lista (Case, Vidrio normal, 9D o privacy), toma la foto o elígela de la galería y los grupos de compatibles se agregan y se suben solos a esa categoría. Cada renglón con varios modelos (separados por coma, "/", "-" o "+"), o cada bloque separado por un espacio, es un grupo. Siempre queda **Deshacer lo que agregué**. Si desmarcas "Subir solo, sin revisar antes", primero te muestra el texto leído para que lo corrijas. La lectura se hace en el teléfono (la foto no se envía a ningún lado). Prueba en navegador: `npm run build:test && NODE_PATH=$(npm root -g) node e2e/scan.cjs`.

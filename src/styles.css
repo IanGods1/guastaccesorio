@@ -337,3 +337,91 @@ details > summary { cursor: pointer; padding: 8px 0; font-weight: 600; }
 .brand-filter::-webkit-scrollbar { display: none; }
 .chip { flex: none; padding: 10px 18px; border-radius: 999px; border: 1px solid var(--border); background: var(--surface); color: var(--on-surface, inherit); font: inherit; font-size: 16px; font-weight: 600; cursor: pointer; }
 .chip.on { background: var(--primary); color: var(--on-primary); border-color: var(--primary); }
+
+
+/* =====================================================================
+   Diseño "glass" (vidrio esmerilado): fondo con color, superficies translúcidas
+   con desenfoque, bordes de luz y mosaicos pequeños. Va al final para que prevalezca.
+   ===================================================================== */
+:root {
+  --glass: rgba(255, 255, 255, 0.62);
+  --glass-strong: rgba(255, 255, 255, 0.78);
+  --glass-border: rgba(255, 255, 255, 0.7);
+  --glass-shadow: 0 8px 28px -12px rgba(20, 30, 60, 0.35);
+  --glass-blur: blur(20px) saturate(170%);
+}
+:root[data-theme='dark'] {
+  --glass: rgba(255, 255, 255, 0.07);
+  --glass-strong: rgba(255, 255, 255, 0.12);
+  --glass-border: rgba(255, 255, 255, 0.16);
+  --glass-shadow: 0 10px 30px -12px rgba(0, 0, 0, 0.7);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --glass: rgba(255, 255, 255, 0.07);
+    --glass-strong: rgba(255, 255, 255, 0.12);
+    --glass-border: rgba(255, 255, 255, 0.16);
+    --glass-shadow: 0 10px 30px -12px rgba(0, 0, 0, 0.7);
+  }
+}
+
+/* Fondo: manchas de color difusas detrás de todo */
+body { background: var(--bg); min-height: 100vh; }
+body::before {
+  content: ''; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+  background:
+    radial-gradient(60% 40% at 12% 8%, color-mix(in srgb, var(--accent) 38%, transparent), transparent 70%),
+    radial-gradient(55% 38% at 92% 30%, color-mix(in srgb, var(--primary) 30%, transparent), transparent 70%),
+    radial-gradient(70% 45% at 30% 98%, color-mix(in srgb, var(--accent) 26%, transparent), transparent 70%);
+}
+
+/* Superficies de vidrio */
+.card, .tile, .list-item.suggestion, .tabs, .choice, .chip, .input, .btn.outline, .model-chip, .toast, .dialog, .step, .brand-filter .chip {
+  -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur);
+}
+.card, .tile, .list-item.suggestion, .step {
+  background: var(--glass); border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+.tabs, .choice { background: var(--glass); border: 1px solid var(--glass-border); }
+.tab.on, .choice .btn:not(.outline) { background: var(--glass-strong); border: 1px solid var(--glass-border); }
+.chip { background: var(--glass); border: 1px solid var(--glass-border); }
+.chip.on { background: var(--primary); color: var(--on-primary); border-color: transparent; }
+.input { background: var(--glass); border: 1px solid var(--glass-border); }
+.input:focus { background: var(--glass-strong); }
+.btn.outline { background: var(--glass); border: 1px solid var(--glass-border); color: var(--primary); box-shadow: var(--glass-shadow); }
+.btn:not(.outline):not(.danger) { background: linear-gradient(180deg, color-mix(in srgb, var(--primary) 88%, #fff), var(--primary)); border-color: transparent; box-shadow: 0 6px 18px -6px color-mix(in srgb, var(--primary) 70%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.3); }
+.model-chip { background: var(--glass); }
+.dialog { background: var(--glass-strong); border: 1px solid var(--glass-border); }
+.backdrop { background: rgba(10, 16, 32, 0.35); }
+.toast { background: var(--glass-strong); color: var(--on-surface); border: 1px solid var(--glass-border); }
+:root[data-theme='dark'] .toast { background: var(--glass-strong); color: var(--on-surface); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme='light']) .toast { background: var(--glass-strong); color: var(--on-surface); } }
+.list-item { border-bottom-color: color-mix(in srgb, var(--on-surface) 10%, transparent); }
+
+/* Barra superior y cabecera: vidrio tintado con el color elegido */
+.appbar { background: linear-gradient(135deg, color-mix(in srgb, var(--navy) 82%, transparent), color-mix(in srgb, var(--navy2) 78%, transparent)); -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur); border-bottom: 1px solid rgba(255, 255, 255, 0.18); }
+.appbar.flat { background: transparent; border: 0; -webkit-backdrop-filter: none; backdrop-filter: none; }
+.hero-wrap { background: linear-gradient(160deg, color-mix(in srgb, var(--navy) 86%, transparent), color-mix(in srgb, var(--navy2) 80%, transparent)); -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur); border-bottom: 1px solid rgba(255, 255, 255, 0.2); padding-bottom: 20px; }
+.hero .input { background: rgba(255, 255, 255, 0.92); border: 0; }
+.hero h2 { font-size: 26px; }
+
+/* Mosaicos del inicio: pequeños, 3 por fila */
+.tiles { grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.tile, .tile.primary, .tile.wide {
+  grid-column: auto; flex-direction: column; align-items: center; justify-content: center; text-align: center;
+  gap: 6px; min-height: 0; padding: 12px 6px 10px; border-radius: 20px;
+}
+.tile .grow { flex: none; }
+.tile-icon, .tile.primary .tile-icon { width: 40px; height: 40px; border-radius: 13px; background: color-mix(in srgb, var(--primary) 18%, transparent); color: var(--primary); }
+.tile-title { font-size: 13px; font-weight: 700; line-height: 1.15; }
+.tile-sub { display: none; }
+.tile br { display: none; }
+.tile.primary { color: var(--on-surface); background: linear-gradient(160deg, color-mix(in srgb, var(--primary) 26%, var(--glass)), var(--glass)); }
+.tile.primary .tile-sub { display: block; font-size: 11px; color: var(--muted); }
+.tile.primary .tile-sub, .tile.primary .chev { color: var(--muted); }
+.tile.primary .chev { display: none; }
+.tile-title, .tile-sub { display: block; }
+.tile-sub { display: none; }
+.tile.primary .tile-sub { display: block; }
+.search-wrap > .icon, .search-wrap > .clear { z-index: 1; }
