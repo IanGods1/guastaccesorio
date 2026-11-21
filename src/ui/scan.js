@@ -6,6 +6,8 @@ import { photoToText, PHOTO_KINDS } from '../core/photo.js';
 import { commitParsed, restoreSnapshot } from '../core/commit.js';
 import { readPhoto } from './photo-ocr.js';
 import { modelsList } from '../core/data.js';
+import { readPhotoWithAI } from './photo-ai.js';
+import { AI_MODELS, DEFAULT_AI_MODEL } from '../core/photo-ai.js';
 
 const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
 
@@ -14,6 +16,10 @@ export function ScanScreen(app) {
   const state = { kind: app.storage.getItem('gc_scan_kind') || 'case', phase: 'start', progress: 0, msg: '', text: '', res: null, error: '' };
   const autoOn = () => app.storage.getItem('gc_scan_auto') === '1'; // por omisión se revisa antes de subir
   const root = h('div', { class: 'screen' });
+  // La llave de IA se guarda solo en este dispositivo (no se sube a la nube).
+  const aiKey = () => app.storage.getItem('gc_vision_key') || '';
+  const aiModel = () => app.storage.getItem('gc_vision_model') || DEFAULT_AI_MODEL;
+  const useAI = () => !!aiKey() && app.storage.getItem('gc_vision_on') !== '0';
 
   const camera = h('input', { type: 'file', accept: 'image/*', capture: 'environment', hidden: true, onchange: (e) => pick(e.target) });
   const gallery = h('input', { type: 'file', accept: 'image/*', hidden: true, onchange: (e) => pick(e.target) });
@@ -27,13 +33,15 @@ export function ScanScreen(app) {
     state.error = '';
     render();
     try {
-      const raw = await readPhoto(f, (p, msg) => {
+      const kind = PHOTO_KINDS.find((k) => k.id === state.kind);
+      const onProgress = (p, msg) => {
         state.progress = p;
         state.msg = msg;
         updateProgress();
-      });
-      const prefix = PHOTO_KINDS.find((k) => k.id === state.kind).prefix;
-      const out = photoToText(raw, prefix, { known: modelsList(store.data).map((m) => m.name) });
+      };
+      const out = useAI()
+        ? await readPhotoWithAI(f, { key: aiKey(), model: aiModel(), kindLabel: kind.label, prefix: kind.prefix }, onProgress)
+        : photoToText(await readPhoto(f, onProgress), kind.prefix, { known: modelsList(store.data).map((m) => m.name) });
       if (out.groups === 0) {
         state.phase = 'start';
         state.error = 'No encontré grupos de modelos en la foto. Prueba con la foto más cerca, recta y con buena luz, y que cada renglón tenga varios modelos.';
@@ -77,6 +85,38 @@ export function ScanScreen(app) {
   function updateProgress() {
     progressEl.value = state.progress;
     msgEl.textContent = state.msg;
+  }
+
+  /** Tarjeta "Leer con IA": pegar la llave una vez, activar o quitar. */
+  function aiCard() {
+    if (!aiKey()) {
+      const input = h('input', { class: 'input', type: 'password', placeholder: 'Pega aquí tu llave (sk-ant-…)', autocomplete: 'off', autocapitalize: 'none', spellcheck: 'false' });
+      return h(
+        'div',
+        { class: 'card step' },
+        h('div', { class: 'step-title' }, 'Leer con IA (mucho más preciso)'),
+        h('p', { class: 'small muted' }, 'Con IA la foto se lee mucho mejor, incluso con diseño o ángulo. La foto se envía a Anthropic y cada una cuesta unos centavos. La llave se guarda solo en este teléfono. Ponle un límite de gasto en la consola de Anthropic.'),
+        input,
+        bigButton('Guardar llave y activar', () => {
+          const k = input.value.trim();
+          if (!/^sk-ant-/.test(k)) return toast('Esa no parece una llave de Anthropic (empieza con sk-ant-)', 5000);
+          app.storage.setItem('gc_vision_key', k);
+          app.storage.setItem('gc_vision_on', '1');
+          toast('Llave guardada. Ya se leerán las fotos con IA');
+          render();
+        }, { outline: true, small: true }),
+      );
+    }
+    const on = h('input', { type: 'checkbox', checked: useAI(), onchange: (e) => (app.storage.setItem('gc_vision_on', e.target.checked ? '1' : '0'), render()) });
+    const sel = h('select', { class: 'input', onchange: (e) => app.storage.setItem('gc_vision_model', e.target.value) }, AI_MODELS.map((m) => h('option', { value: m.id, selected: m.id === aiModel() }, m.label)));
+    return h(
+      'div',
+      { class: 'card step' },
+      h('label', { class: 'check strong' }, on, h('span', null, 'Leer con IA')),
+      useAI() ? h('p', { class: 'small muted' }, 'La foto se envía a Anthropic para leerla (unos centavos por foto).') : h('p', { class: 'small muted' }, 'Apagada: se usa el lector del teléfono, menos preciso.'),
+      sel,
+      bigButton('Quitar la llave de este teléfono', () => (app.storage.removeItem('gc_vision_key'), render()), { outline: true, small: true, danger: true }),
+    );
   }
 
   function kindPicker() {
@@ -142,6 +182,7 @@ export function ScanScreen(app) {
           h('label', { class: 'check' }, autoBox, h('span', null, 'Subir solo, sin revisar antes (solo si tus fotos se leen bien)')),
           state.error ? h('p', { class: 'warn' }, state.error) : null,
         ),
+        aiCard(),
         h('p', { class: 'muted small center' }, 'Funciona mejor con la foto recta, cerca y con buena luz. La primera vez descarga el lector (unos 10 MB).'),
       ];
     }

@@ -425,3 +425,4 @@ body::before {
 .tile-sub { display: none; }
 .tile.primary .tile-sub { display: block; }
 .search-wrap > .icon, .search-wrap > .clear { z-index: 1; }
+.choice .btn:not(.outline):not(.danger) { background: var(--glass-strong); color: var(--primary); border: 1px solid var(--glass-border); box-shadow: var(--glass-shadow); }

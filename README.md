@@ -38,6 +38,10 @@ El botón **Teléfonos nuevos** muestra los lanzamientos de las marcas populares
 
 Solo para el administrador: botón **Escanear lista** en el inicio (y en Administrar datos). Elige el tipo de lista (Case, Vidrio normal, 9D o privacy), toma la foto o elígela de la galería y los grupos de compatibles se agregan y se suben solos a esa categoría. Cada renglón con varios modelos (separados por coma, "/", "-" o "+"), o cada bloque separado por un espacio, es un grupo. Siempre queda **Deshacer lo que agregué**. Si desmarcas "Subir solo, sin revisar antes", primero te muestra el texto leído para que lo corrijas. La lectura se hace en el teléfono (la foto no se envía a ningún lado). Prueba en navegador: `npm run build:test && NODE_PATH=$(npm root -g) node e2e/scan.cjs`.
 
+### Leer con IA (más preciso)
+
+En **Escanear lista** puedes pegar una llave de API de Anthropic (empieza con `sk-ant-`) en la tarjeta "Leer con IA". Desde entonces cada foto se lee con visión de Claude (Sonnet 5.5 por omisión, o Haiku 5.5 más barato): entiende diseños, ángulos y texto con estilo, y devuelve los grupos ya ordenados. La foto se envía a Anthropic (unos centavos por foto). La llave se guarda solo en el navegador de ese dispositivo (no en la nube ni en el repositorio); ponle un límite de gasto en la consola de Anthropic. Sin llave se usa el lector del teléfono (OCR), que solo funciona bien con texto limpio. Siempre se puede revisar antes de subir y deshacer.
+
 ## Pegar información de una IA
 
 Solo para el administrador (botón **Pegar información** en el inicio).

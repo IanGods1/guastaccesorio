@@ -72,7 +72,54 @@ const server = http.createServer((q, r) => {
   assert.ok(Object.values(await data().then((x) => x.groups)).every((g) => g.type === 'CASE'));
   console.log('  ✓ con "revisar antes": se corrige el texto y se sube a la categoría Case');
 
-  assert.deepEqual(errs, [], errs.join('\n'));
+  // ---- Con IA (la API se simula)
+  let calls = 0, lastReq = null, status = 200;
+  await p.route('https://api.anthropic.com/v1/messages', async (route) => {
+    calls++;
+    lastReq = { headers: route.request().headers(), body: JSON.parse(route.request().postData()) };
+    if (status !== 200) return route.fulfill({ status, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: JSON.stringify({ error: { message: 'x' } }) });
+    await route.fulfill({
+      status: 200, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' },
+      body: JSON.stringify({ content: [{ type: 'tool_use', name: 'registrar_grupos', input: { grupos: [{ modelos: ['iPhone 15', 'iPhone 16'], nota: 'Bordes altos' }, { modelos: ['Galaxy S25', 'Galaxy S24'] }] } }] }),
+    });
+  });
+  await p.goto(url + '#/scan');
+  await p.getByText('Leer con IA (mucho más preciso)').waitFor();
+  await p.locator('input[type=password]').fill('no-es-llave');
+  await btn('Guardar llave y activar').click();
+  await p.getByText('Esa no parece una llave').waitFor();
+  await p.locator('input[type=password]').fill('sk-ant-prueba123');
+  await btn('Guardar llave y activar').click();
+  await p.getByLabel('Leer con IA').waitFor();
+  assert.equal(await p.getByLabel('Leer con IA').isChecked(), true);
+  await p.getByLabel(/Subir solo, sin revisar/).uncheck();
+  await btn('Vidrio privacy', { exact: true }).click();
+  await file().setInputFiles(img);
+  await p.getByText('Revisa lo que leí').waitFor({ timeout: 30000 });
+  assert.equal(calls, 1);
+  assert.equal(lastReq.headers['x-api-key'], 'sk-ant-prueba123');
+  assert.equal(lastReq.headers['anthropic-dangerous-direct-browser-access'], 'true');
+  assert.equal(lastReq.body.messages[0].content[0].source.media_type, 'image/jpeg');
+  assert.match(lastReq.body.messages[0].content[1].text, /Vidrio privacy/);
+  assert.equal(await p.locator('textarea').inputValue(), 'Vidrio privacy: iPhone 15, iPhone 16\nNota: Bordes altos\nVidrio privacy: Galaxy S25, Galaxy S24');
+  await shot('4-ia');
+  await btn('Agregar y subir a la nube').click();
+  await p.getByText('2 grupos agregados').waitFor();
+  assert.ok(Object.values((await data()).groups).some((g) => g.variant === 'PRIVACY' && g.note === 'Bordes altos'));
+  console.log('  ✓ con IA: manda la foto, entiende la respuesta y sube a Vidrio privacy con su nota');
+
+  status = 401;
+  await btn('Escanear otra foto').click();
+  await file().setInputFiles(img);
+  await p.getByText(/La llave de IA no es válida/).waitFor({ timeout: 30000 });
+  console.log('  ✓ si la llave no sirve, lo explica');
+  await btn('Quitar la llave de este teléfono').click();
+  await p.getByText('Leer con IA (mucho más preciso)').waitFor();
+  assert.equal(await p.evaluate(() => localStorage.getItem('gc_vision_key')), null);
+  console.log('  ✓ se puede quitar la llave');
+
+  const real = errs.filter((e) => !/401 \(Unauthorized\)/.test(e)); // el 401 es la prueba de llave inválida
+  assert.deepEqual(real, [], real.join('\n'));
   console.log('  ✓ sin errores en la consola\n\nTODO BIEN');
   await browser.close();
   server.close();
