@@ -196,5 +196,14 @@ if (__TEST__) window.__app = { backend, store, auth, router: app.router, derive,
 
 // Instalable y con copia sin internet.
 if (!__TEST__ && 'serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
-  navigator.serviceWorker.register('sw.js').catch(() => {});
+  // Si ya había una versión instalada y llega una nueva, se recarga una vez para mostrarla de inmediato.
+  const hadController = !!navigator.serviceWorker.controller;
+  let reloaded = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (hadController && !reloaded) {
+      reloaded = true;
+      location.reload();
+    }
+  });
+  navigator.serviceWorker.register('sw.js').then((reg) => reg.update()).catch(() => {});
 }
