@@ -1,5 +1,5 @@
 {
- "updated": "2026-11-20",
+ "updated": "2026-11-23",
  "source": "Wikidata y Wikipedia",
  "phones": [
   {
@@ -224,11 +224,6 @@
   },
   {
    "name": "Galaxy A56 5G",
-   "brand": "Samsung",
-   "year": 2025
-  },
-  {
-   "name": "Galaxy M36 5G",
    "brand": "Samsung",
    "year": 2025
   },
