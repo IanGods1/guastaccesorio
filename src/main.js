@@ -17,6 +17,9 @@ import { GroupEditScreen } from './ui/group-edit.js';
 import { SettingsScreen } from './ui/settings.js';
 import { PasteScreen } from './ui/paste.js';
 import { ScanScreen } from './ui/scan.js';
+import { SalesScreen } from './ui/sales.js';
+import { InventoryScreen } from './ui/inventory.js';
+import { ShopStore } from './core/shop-store.js';
 import { themeCss, barColor, DEFAULT_COLOR } from './core/theme.js';
 
 /* global __TEST__ */
@@ -36,6 +39,7 @@ const storage = safeStorage();
 
 const backend = __TEST__ ? new MemoryBackend() : new FirebaseBackend(firebaseConfig);
 const store = new Store(backend);
+const shop = new ShopStore(backend);
 const auth = new AuthManager(backend, storage);
 
 // Una versión anterior guardaba aquí una llave de IA (esa función ya no existe): se borra.
@@ -70,7 +74,7 @@ function applyTheme() {
 }
 applyTheme();
 
-const app = { backend, store, auth, theme, storage, router: null };
+const app = { backend, store, shop, auth, theme, storage, router: null };
 
 // ---------------------------------------------------------------- Pantalla actual
 
@@ -90,6 +94,8 @@ function routeScreen({ path, query }) {
   if (path === '/') return HomeScreen(app);
   if ((m = path.match(/^\/m\/(.+)$/))) return ResultScreen(app, decodeURIComponent(m[1]));
   if (path === '/models') return ModelsScreen(app, { admin: false });
+  if (path === '/sales') return SalesScreen(app);
+  if (path === '/inventory') return InventoryScreen(app);
   if (path === '/releases') return ReleasesScreen(app);
   // Pantallas de administración: no existen para el trabajador.
   if (!admin) return null;
@@ -135,6 +141,9 @@ function startSync() {
   stopSync = backend.listen({
     onModels: (docs) => store.setModels(docs),
     onGroups: (docs) => store.setGroups(docs),
+    onProducts: (docs) => shop.setProducts(docs),
+    onMoves: (docs) => shop.setMoves(docs),
+    onClosings: (docs) => shop.setClosings(docs),
     onError: (e) => {
       // Si la nube rechaza la lectura, puede ser que cambió la contraseña de trabajador.
       if (e.kind === 'permission-denied') auth.checkWorkerPasswordChanged();
@@ -145,8 +154,11 @@ function endSync() {
   stopSync?.();
   stopSync = null;
   store.reset();
+  shop.reset();
 }
 
+shop.onWriteError = (e) =>
+  toast(e.kind === 'permission-denied' ? 'No se pudo guardar: falta publicar las reglas nuevas de Firebase o no tienes permiso.' : `No se pudo guardar en la nube: ${e.message}`, 8000);
 store.onWriteError = (e) =>
   toast(e.kind === 'permission-denied' ? 'No tienes permiso para guardar cambios.' : `No se pudo guardar en la nube: ${e.message}`, 7000);
 
@@ -162,14 +174,16 @@ auth.subscribe((state) => {
 
 // La pantalla se actualiza sola cuando llegan datos nuevos.
 let scheduled = false;
-store.subscribe(() => {
+const refresh = () => {
   if (scheduled) return;
   scheduled = true;
   requestAnimationFrame(() => {
     scheduled = false;
     if (auth.state.kind === 'logged-in') current?.update?.();
   });
-});
+};
+store.subscribe(refresh);
+shop.subscribe(refresh);
 
 // ---------------------------------------------------------------- Sin internet / segundo plano
 
@@ -192,7 +206,7 @@ auth.initialize().catch((e) => {
   show(NeedsInternetScreen(app, `No se pudo iniciar: ${e.message}`));
 });
 
-if (__TEST__) window.__app = { backend, store, auth, router: app.router, derive, newSalt };
+if (__TEST__) window.__app = { backend, store, shop, auth, router: app.router, derive, newSalt };
 
 // Instalable y con copia sin internet.
 if (!__TEST__ && 'serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {

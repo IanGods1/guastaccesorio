@@ -3,9 +3,11 @@ rules_version = '2';
 // Reglas de seguridad de Guastaccesorio.
 // Copia TODO este archivo en Firebase: Firestore Database > Reglas > Publicar.
 //
-// - Solo el ADMINISTRADOR puede escribir datos.
-// - El TRABAJADOR solo puede leer, y solo mientras su sesión tenga la contraseña de trabajador
+// - Solo el ADMINISTRADOR puede escribir los datos de compatibilidad, productos y existencias.
+// - El TRABAJADOR puede leer, y solo mientras su sesión tenga la contraseña de trabajador
 //   vigente. Cuando el administrador la cambia, todas las sesiones de trabajador dejan de servir.
+// - Además el trabajador puede ANOTAR ventas y CERRAR el día de su caja. Solo crear: nunca editar
+//   ni borrar. Una vez cerrado el día de una caja, ya no se le permite anotar más ventas ahí.
 service cloud.firestore {
   match /databases/{database}/documents {
 
@@ -56,6 +58,45 @@ service cloud.firestore {
     match /groups/{id} {
       allow read: if isAdmin() || isWorker();
       allow write: if isAdmin();
+    }
+
+    // ---------------------------------------------------------------- Ventas e inventario
+
+    match /products/{id} {
+      allow read: if isAdmin() || isWorker();
+      allow write: if isAdmin();
+    }
+
+    // Movimientos: ventas (kind 'sale'), entradas ('in') y ajustes ('adjust').
+    function validSale() {
+      let d = request.resource.data;
+      return d.keys().hasOnly(['productId', 'productName', 'kind', 'qty', 'price', 'caja', 'day', 'by', 'at'])
+        && d.kind == 'sale' && d.by == 'worker'
+        && d.qty is int && d.qty > 0 && d.qty <= 1000
+        && (d.price is int || d.price is float) && d.price >= 0
+        && d.caja in ['1', '2']
+        && d.day is string && d.day.size() == 10
+        && d.productId is string && d.productName is string
+        && !exists(/databases/$(database)/documents/closings/$(d.day + '_' + d.caja));
+    }
+    match /moves/{id} {
+      allow read: if isAdmin() || isWorker();
+      allow create: if isAdmin() || (isWorker() && validSale());
+      allow update, delete: if isAdmin();
+    }
+
+    // Cierre del día de una caja: el id es "AAAA-MM-DD_caja".
+    function validClosing(id) {
+      let d = request.resource.data;
+      return d.keys().hasOnly(['day', 'caja', 'fondo', 'sold', 'count', 'by', 'at'])
+        && d.by == 'worker' && d.caja in ['1', '2']
+        && id == d.day + '_' + d.caja
+        && (d.fondo is int || d.fondo is float) && d.fondo >= 0;
+    }
+    match /closings/{id} {
+      allow read: if isAdmin() || isWorker();
+      allow create: if isAdmin() || (isWorker() && validClosing(id));
+      allow update, delete: if isAdmin();
     }
 
     // Todo lo demás está prohibido.

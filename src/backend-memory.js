@@ -5,7 +5,7 @@ const KEY = 'mem_cloud_v1';
 
 const err = (kind, message = kind) => Object.assign(new Error(message), { kind });
 
-export const newCloud = () => ({ config: null, workerToken: null, adminPassword: null, models: {}, groups: {}, sessions: {} });
+export const newCloud = () => ({ config: null, workerToken: null, adminPassword: null, models: {}, groups: {}, products: {}, moves: {}, closings: {}, sessions: {} });
 
 export class MemoryBackend {
   /**
@@ -128,8 +128,8 @@ export class MemoryBackend {
     return false;
   }
 
-  listen({ onModels, onGroups, onError }) {
-    const l = { onModels, onGroups, onError };
+  listen({ onModels, onGroups, onProducts, onMoves, onClosings, onError }) {
+    const l = { onModels, onGroups, onProducts, onMoves, onClosings, onError };
     this.dataListeners.add(l);
     queueMicrotask(() => this.notifyOne(l));
     return () => this.dataListeners.delete(l);
@@ -137,8 +137,9 @@ export class MemoryBackend {
 
   notifyOne(l) {
     if (!this.canRead()) return l.onError(err('permission-denied'));
-    l.onModels(structuredClone(this.cloud.models));
-    l.onGroups(structuredClone(this.cloud.groups));
+    for (const [cb, col] of [[l.onModels, 'models'], [l.onGroups, 'groups'], [l.onProducts, 'products'], [l.onMoves, 'moves'], [l.onClosings, 'closings']]) {
+      if (cb) cb(structuredClone(this.cloud[col] ?? {}));
+    }
   }
 
   notifyData() {
@@ -146,10 +147,29 @@ export class MemoryBackend {
     for (const other of this.cloud.peers ?? []) if (other !== this) for (const l of [...other.dataListeners]) other.notifyOne(l);
   }
 
+  /** Imita las reglas de Firestore: el trabajador solo puede ANOTAR ventas y CERRAR el día (nunca editar ni borrar). */
+  allowed(w) {
+    if (this.isAdminSignedIn()) return true;
+    if (!this.canRead() || this.user?.kind !== 'worker') return false;
+    const col = this.cloud[w.col] ?? {};
+    const d = w.doc;
+    if (d === null || w.id in col) return false; // no borra ni edita
+    if (w.col === 'moves') {
+      const keys = ['productId', 'productName', 'kind', 'qty', 'price', 'caja', 'day', 'by', 'at'];
+      return Object.keys(d).every((k) => keys.includes(k)) && d.kind === 'sale' && d.by === 'worker' && Number.isInteger(d.qty) && d.qty > 0 && d.qty <= 1000 && typeof d.price === 'number' && d.price >= 0 && ['1', '2'].includes(d.caja) && typeof d.day === 'string' && d.day.length === 10 && !((`${d.day}_${d.caja}`) in (this.cloud.closings ?? {}));
+    }
+    if (w.col === 'closings') {
+      const keys = ['day', 'caja', 'fondo', 'sold', 'count', 'by', 'at'];
+      return Object.keys(d).every((k) => keys.includes(k)) && w.id === `${d.day}_${d.caja}` && typeof d.fondo === 'number' && d.fondo >= 0 && d.by === 'worker';
+    }
+    return false;
+  }
+
   async commit(writes) {
-    if (!this.isAdminSignedIn()) throw err('permission-denied');
+    if (!writes.every((w) => this.allowed(w))) throw err('permission-denied');
     for (const w of writes) {
       this.writes.push(w);
+      this.cloud[w.col] ??= {};
       if (w.doc === null) delete this.cloud[w.col][w.id];
       else this.cloud[w.col][w.id] = structuredClone(w.doc);
     }

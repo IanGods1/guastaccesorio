@@ -426,3 +426,18 @@ body::before {
 .tile.primary .tile-sub { display: block; }
 .search-wrap > .icon, .search-wrap > .clear { z-index: 1; }
 .choice .btn:not(.outline):not(.danger) { background: var(--glass-strong); color: var(--primary); border: 1px solid var(--glass-border); box-shadow: var(--glass-shadow); }
+
+/* ---------- Ventas e inventario ---------- */
+.ov-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.ov-box { padding: 12px; border-radius: 16px; background: color-mix(in srgb, var(--primary) 10%, transparent); border: 1px solid var(--glass-border); text-align: center; }
+.ov-box.closed { background: color-mix(in srgb, #1f8a4c 16%, transparent); }
+.ov-t { font-weight: 700; font-size: 15px; color: var(--muted); }
+.ov-n { font-weight: 800; font-size: 22px; letter-spacing: -0.01em; }
+.ov-s { font-size: 13px; color: var(--muted); }
+.ov-total { display: flex; justify-content: space-between; align-items: baseline; font-size: 17px; padding: 2px 4px; }
+.ov-total b { font-size: 20px; }
+.input.qty { text-align: center; }
+.stock { font-size: 14px; font-weight: 700; padding: 4px 10px; border-radius: 999px; white-space: nowrap; }
+.stock.ok { background: color-mix(in srgb, #1f8a4c 20%, transparent); color: var(--on-surface); }
+.stock.low { background: color-mix(in srgb, #d98a00 28%, transparent); color: var(--on-surface); }
+.stock.out { background: color-mix(in srgb, #c0392b 28%, transparent); color: var(--on-surface); }

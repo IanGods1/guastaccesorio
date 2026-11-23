@@ -30,6 +30,16 @@ La web tiene un diseño nuevo: buscador grande con degradado, accesos en mosaico
 
 ---
 
+## Ventas del día, inventario y cierre de caja
+
+**Antes de usarlo, publica las reglas nuevas** (una sola vez): copia todo el archivo `firestore.rules` en Firebase → Firestore Database → Reglas → Publicar. Sin eso las ventas no se guardan.
+
+- **Inventario** (todos lo ven en tiempo real, solo el administrador lo cambia): el administrador agrega productos con precio y cuántos hay; toca un producto para cambiar precio, sumar o restar existencias o eliminarlo. Las existencias salen de: entradas + ajustes − ventas.
+- **Ventas del día** (administrador y trabajadores): se elige la Caja 1 o la Caja 2, se escoge el producto, la cantidad y el precio (viene el del producto, se puede cambiar si se vendió a otro precio) y **Anotar venta**. Pide confirmación y avisa si se vende más de lo que hay. Lo anotado **no se puede editar ni borrar** (lo impide la nube, no solo la pantalla). El inventario baja al instante en las dos cajas.
+- **Cerrar el día**: cada caja se cierra por separado con el **fondo** que se deja. Al cerrar se bloquea esa caja: ya no se puede anotar ni modificar nada. La otra caja sigue abierta y ve el cierre de la primera.
+- **Administrador**: ve el total vendido y el fondo de las dos cajas de cualquier día (selector de día), lo que se vendió por producto, puede borrar una venta (vuelve al inventario) y reabrir un día cerrado.
+- Se maneja en quetzales (Q). El día es el de la fecha del teléfono. Prueba en navegador: `npm run build:test && NODE_PATH=$(npm root -g) node e2e/shop.cjs`.
+
 ## Teléfonos nuevos (automático)
 
 El botón **Teléfonos nuevos** muestra los lanzamientos de las marcas populares (Apple, Samsung, Xiaomi, Motorola, Huawei, Honor, Google, OnePlus, Oppo, Realme, Vivo, Nokia, Infinix, Tecno), con botones por marca. Cada día, GitHub busca solo los nuevos en Wikidata (flujo "Buscar teléfonos nuevos"), guarda `data/novedades.json` y vuelve a publicar la web. Para buscar ya: Actions → "Buscar teléfonos nuevos" → Run workflow. El administrador puede agregar uno o todos a su lista de modelos con un toque. Wikidata puede tardar en tener un modelo recién salido.
