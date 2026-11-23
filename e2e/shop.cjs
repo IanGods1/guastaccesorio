@@ -41,6 +41,11 @@ const log = (m) => console.log(`  ✓ ${m}`);
     await btn('Guardar').click();
     await text(name, { exact: true }).waitFor();
   }
+  // El cargador es solo de la Caja 2
+  await text('Cargador', { exact: true }).click();
+  await btn('Solo Caja 2').click();
+  await btn('Guardar').click();
+  await text('Solo Caja 2').first().waitFor();
   await text('20 en existencia').first().waitFor();
   await shot('1-inventario-admin');
   assert.equal(Object.keys((await cloud()).products).length, 2);
@@ -62,12 +67,13 @@ const log = (m) => console.log(`  ✓ ${m}`);
   await text('1 × Ventilador a Q120.00 = Q120.00').waitFor();
   await btn('Sí, anotar').click();
   await text('1 × Ventilador', { exact: true }).waitFor();
-  await page.getByLabel('Producto').selectOption({ label: 'Cargador · Q50.00 (quedan 20)' });
+  assert.deepEqual(await page.getByLabel('Producto').locator('option').allInnerTexts(), ['Elige el producto…', 'Ventilador · Q120.00 (quedan 19)']); // el cargador es solo de la Caja 2
+  await page.getByLabel('Producto').selectOption({ label: 'Ventilador · Q120.00 (quedan 19)' });
   await page.getByLabel('Cantidad').fill('2');
   await page.getByLabel('Precio de cada uno').fill('45');
   await btn('Anotar venta').click();
   await btn('Sí, anotar').click();
-  await text('2 × Cargador', { exact: true }).waitFor();
+  await text('2 × Ventilador', { exact: true }).waitFor();
   await text('Q210.00').first().waitFor();
   await shot('2-caja1');
   const moves = Object.values((await cloud()).moves).filter((m) => m.kind === 'sale');
@@ -77,10 +83,10 @@ const log = (m) => console.log(`  ✓ ${m}`);
   log('el trabajador anota ventas (con confirmación) y no puede borrarlas');
 
   // Cantidad mayor al inventario: avisa
-  await page.getByLabel('Producto').selectOption({ label: 'Ventilador · Q120.00 (quedan 19)' });
+  await page.getByLabel('Producto').selectOption({ label: 'Ventilador · Q120.00 (quedan 17)' });
   await page.getByLabel('Cantidad').fill('30');
   await btn('Anotar venta').click();
-  await text('solo hay 19').waitFor();
+  await text('solo hay 17').waitFor();
   await btn('Cancelar').click();
   log('avisa si se quiere vender más de lo que hay');
 
@@ -102,7 +108,7 @@ const log = (m) => console.log(`  ✓ ${m}`);
   // La otra caja sigue abierta
   await btn(/Caja 2/).click();
   await text('Anotar una venta · Caja 2').waitFor();
-  await page.getByLabel('Producto').selectOption({ label: 'Cargador · Q50.00 (quedan 18)' });
+  await page.getByLabel('Producto').selectOption({ label: 'Cargador · Q50.00 (quedan 20)' });
   await page.getByLabel('Cantidad').fill('1');
   await btn('Anotar venta').click();
   await btn('Sí, anotar').click();
@@ -112,7 +118,10 @@ const log = (m) => console.log(`  ✓ ${m}`);
 
   // Inventario del trabajador: solo lectura, con lo vendido
   await page.goto(url + '#/inventory');
-  await text('19 en existencia').waitFor();
+  await text('19 en existencia').waitFor(); // abre en su caja (la 2)
+  await btn('Caja 1', { exact: true }).click();
+  assert.equal(await text('Cargador', { exact: true }).count(), 0); // el cargador no es de la Caja 1
+  await btn('Todos').click();
   await text('17 en existencia').waitFor();
   assert.equal(await btn('Agregar producto').count(), 0);
   await shot('4-inventario-trabajador');

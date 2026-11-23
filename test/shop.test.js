@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { money, parseMoney, parseQty, dayString, stockOf, stockMap, daySales, byProduct, dayOverview, saleDoc, stockDoc, closingDoc, closingId } from '../src/core/shop.js';
+import { parseCajas, productInCaja, cajasLabel, money, parseMoney, parseQty, dayString, stockOf, stockMap, daySales, byProduct, dayOverview, saleDoc, stockDoc, closingDoc, closingId } from '../src/core/shop.js';
 import { ShopStore } from '../src/core/shop-store.js';
 import { MemoryBackend, newCloud } from '../src/backend-memory.js';
 
@@ -105,4 +105,14 @@ test('shop: reglas — el trabajador solo anota ventas y cierra; nunca edita ni 
   assert.equal(stockOf(product.id, a.moves), 18);
   await a.reopenDay('2026-11-23', '1');
   assert.equal(a.closings['2026-11-23_1'], undefined);
+});
+
+test('shop: cada producto se vende en una caja o en las dos', () => {
+  assert.deepEqual(parseCajas(undefined), ['1', '2']);
+  assert.deepEqual(parseCajas(['2']), ['2']);
+  assert.deepEqual(parseCajas(['x']), ['1', '2']);
+  assert.equal(productInCaja({ cajas: ['1'] }, '2'), false);
+  assert.equal(productInCaja({}, '2'), true);
+  assert.equal(cajasLabel(['2']), 'Solo Caja 2');
+  assert.equal(cajasLabel(['1', '2']), 'Las dos cajas');
 });

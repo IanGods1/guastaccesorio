@@ -9,6 +9,20 @@
 
 export const CAJAS = ['1', '2'];
 
+/** Cajas donde se vende un producto (por omisión, las dos). */
+export function parseCajas(v) {
+  const list = Array.isArray(v) ? v.filter((c) => CAJAS.includes(c)) : [];
+  return list.length ? CAJAS.filter((c) => list.includes(c)) : [...CAJAS];
+}
+
+export const productInCaja = (p, caja) => parseCajas(p.cajas).includes(caja);
+
+/** "Las dos cajas" / "Solo Caja 1" / "Solo Caja 2" */
+export function cajasLabel(cajas) {
+  const c = parseCajas(cajas);
+  return c.length === CAJAS.length ? 'Las dos cajas' : `Solo Caja ${c[0]}`;
+}
+
 const round2 = (n) => Math.round((Number(n) + Number.EPSILON) * 100) / 100;
 
 /** 1234.5 → "Q1,234.50" */

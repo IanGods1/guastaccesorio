@@ -1,5 +1,5 @@
 // Copia local de productos, movimientos y cierres + escritura. Observable, como Store.
-import { saleDoc, stockDoc, closingDoc, closingId, newId } from './shop.js';
+import { saleDoc, stockDoc, closingDoc, closingId, newId, parseCajas } from './shop.js';
 
 export class ShopStore {
   constructor(backend) {
@@ -26,7 +26,7 @@ export class ShopStore {
   }
 
   setProducts(docs) {
-    this.products = Object.fromEntries(Object.entries(docs).map(([id, d]) => [id, { id, name: String(d.name ?? ''), price: Number(d.price ?? 0) }]));
+    this.products = Object.fromEntries(Object.entries(docs).map(([id, d]) => [id, { id, name: String(d.name ?? ''), price: Number(d.price ?? 0), cajas: parseCajas(d.cajas) }]));
     this.loaded.products = true;
     this.emit();
   }
@@ -74,9 +74,9 @@ export class ShopStore {
   }
 
   // Solo administrador
-  saveProduct({ id = null, name, price, initialStock = 0, by = 'admin' }) {
+  saveProduct({ id = null, name, price, cajas = ['1', '2'], initialStock = 0, by = 'admin' }) {
     const pid = id ?? newId();
-    const writes = [{ col: 'products', id: pid, doc: { name: name.trim(), price } }];
+    const writes = [{ col: 'products', id: pid, doc: { name: name.trim(), price, cajas: parseCajas(cajas) } }];
     if (!id && initialStock > 0) writes.push({ col: 'moves', id: newId(), doc: stockDoc({ product: { id: pid, name: name.trim() }, qty: initialStock, kind: 'in', by }) });
     return this.write(writes);
   }

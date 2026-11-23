@@ -1,7 +1,7 @@
 // Ventas del día: cada trabajador anota lo que vende en su caja (1 o 2) y al final cierra el día
 // con el fondo que deja. Lo anotado no se puede editar ni borrar; solo el administrador corrige.
 import { h, clear, icon, appBar, bigButton, choiceRow, emptyState, openDialog, toast } from './dom.js';
-import { money, parseMoney, parseQty, dayString, stockMap, daySales, byProduct, dayOverview, closingId, CAJAS } from '../core/shop.js';
+import { money, parseMoney, parseQty, dayString, stockMap, daySales, byProduct, dayOverview, productInCaja, CAJAS } from '../core/shop.js';
 
 const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
 const fmtDay = (day) => new Date(day + 'T12:00:00').toLocaleDateString('es', { weekday: 'long', day: 'numeric', month: 'long' });
@@ -54,10 +54,11 @@ export function SalesScreen(app) {
   function fillProducts() {
     const keep = select.value;
     const stocks = stockMap(shop.moves);
+    const mine = shop.productList().filter((p) => productInCaja(p, state.caja));
     clear(
       select,
-      h('option', { value: '' }, shop.productList().length ? 'Elige el producto…' : 'Todavía no hay productos'),
-      shop.productList().map((p) => h('option', { value: p.id }, `${p.name} · ${money(p.price)} (quedan ${stocks[p.id] ?? 0})`)),
+      h('option', { value: '' }, mine.length ? 'Elige el producto…' : `No hay productos para la Caja ${state.caja}`),
+      mine.map((p) => h('option', { value: p.id }, `${p.name} · ${money(p.price)} (quedan ${stocks[p.id] ?? 0})`)),
     );
     if (keep && shop.products[keep]) select.value = keep;
   }
