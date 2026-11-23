@@ -69,7 +69,7 @@ export function InventoryScreen(app) {
   }
 
   function render() {
-    if (!shop.ready) return clear(list, h('div', { class: 'spinner' }));
+    if (!shop.ready) return clear(list, h('div', { class: 'spinner' }), h('p', { class: 'muted small center' }, 'Cargando… Si no carga, falta publicar las reglas nuevas de Firebase (archivo firestore.rules).'));
     const stocks = stockMap(shop.moves);
     const today = byProduct(daySales(shop.moves, dayString()).sales);
     const soldToday = Object.fromEntries(today.map((p) => [p.productId, p.qty]));
