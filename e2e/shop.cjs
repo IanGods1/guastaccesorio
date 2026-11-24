@@ -51,6 +51,30 @@ const log = (m) => console.log(`  ✓ ${m}`);
   assert.equal(Object.keys((await cloud()).products).length, 2);
   log('el administrador agrega productos con precio y existencias');
 
+  // Códigos de barras únicos y automáticos
+  const prods = Object.values((await cloud()).products);
+  const codes = prods.map((p) => p.barcode);
+  assert.ok(codes.every((c) => /^2\d{12}$/.test(c)) && new Set(codes).size === 2);
+  assert.deepEqual(Object.keys((await cloud()).barcodes).sort(), [...codes].sort());
+  await text('Ventilador', { exact: true }).click();
+  await page.getByLabel('Código de barras (único)').or(page.locator('input[inputmode=numeric]').nth(1)).first();
+  const bcInput = page.locator('.dialog input[placeholder="Se genera solo"]');
+  await bcInput.fill(prods.find((p) => p.name === 'Cargador').barcode);
+  await btn('Guardar').click();
+  await text('Ese código ya lo tiene "Cargador"').waitFor();
+  await btn('Cancelar').click();
+  await shot('1b-codigos');
+  log('cada producto recibe un código único y no deja repetirlo');
+
+  // Etiquetas
+  await btn('Etiquetas para imprimir').click();
+  await text('Compartir / guardar imagen').first().waitFor();
+  assert.equal(await page.locator('canvas').count(), 2);
+  await shot('1c-etiquetas');
+  log('las etiquetas se dibujan con su código de barras');
+  await page.goBack();
+
+
   // --- Trabajador
   await page.goto(url + '#/settings');
   await btn('Cerrar sesión').first().click();
@@ -61,6 +85,17 @@ const log = (m) => console.log(`  ✓ ${m}`);
   assert.equal(await btn('Agregar producto').count(), 0);
   await btn('Ventas del día').click();
   await text('Anotar una venta · Caja 1').waitFor();
+  // Escanear: el lector escribe el código y manda Enter
+  await page.getByLabel('Código de barras', { exact: true }).fill(prods.find((p) => p.name === 'Cargador').barcode);
+  await page.getByLabel('Código de barras', { exact: true }).press('Enter');
+  await text('no se vende en la Caja 1').waitFor(); // el cargador es solo de la Caja 2
+  await page.getByLabel('Código de barras', { exact: true }).fill('0000000000000');
+  await page.getByLabel('Código de barras', { exact: true }).press('Enter');
+  await text('No existe el código').waitFor();
+  await page.getByLabel('Código de barras', { exact: true }).fill(prods.find((p) => p.name === 'Ventilador').barcode);
+  await page.getByLabel('Código de barras', { exact: true }).press('Enter');
+  assert.equal(await page.getByLabel('Precio de cada uno').inputValue(), '120');
+  log('escanear un código elige el producto (y respeta la caja)');
   await page.getByLabel('Producto').selectOption({ label: 'Ventilador · Q120.00 (quedan 20)' });
   assert.equal(await page.getByLabel('Precio de cada uno').inputValue(), '120');
   await btn('Anotar venta').click();

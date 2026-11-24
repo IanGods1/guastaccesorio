@@ -41,6 +41,16 @@ La web tiene un diseño nuevo: buscador grande con degradado, accesos en mosaico
 - **Administrador**: ve el total vendido y el fondo de las dos cajas de cualquier día (selector de día), lo que se vendió por producto, puede borrar una venta (vuelve al inventario) y reabrir un día cerrado.
 - Se maneja en quetzales (Q). El día es el de la fecha del teléfono. Prueba en navegador: `npm run build:test && NODE_PATH=$(npm root -g) node e2e/shop.cjs`.
 
+## Códigos de barras y etiquetas
+
+**Publica otra vez `firestore.rules`** (agrega la colección `barcodes`).
+
+- Cada producto recibe un **código EAN-13 único** al crearlo (empiezan con 2: rango de uso interno, no chocan con códigos de fábrica). La app siempre toma el siguiente número libre y además la nube rechaza un código repetido (el código es el id del documento en `barcodes`), aunque dos personas lo intenten a la vez.
+- En el formulario del producto el código ya viene puesto; si el producto trae código de fábrica (EAN-13 o UPC-A) se escribe o escanea ahí, y la app avisa si ya lo usa otro producto. Cambiarlo o borrar el producto libera el anterior.
+- **Inventario → Generar códigos que faltan** les pone código a los productos que ya estaban.
+- **Inventario → Etiquetas para imprimir:** etiqueta con nombre, código de barras y precio en 40×30, 50×30 o 60×40 mm. **Compartir / guardar imagen** la manda a Labelife (u otra app) o la guarda como PNG. Verificado con un lector de códigos real.
+- **Ventas → Código de barras:** un lector USB o Bluetooth (que escribe el código y manda Enter) o teclear el código elige el producto y su precio; respeta la caja. Escanear con la cámara no está incluido (iPhone/Safari no tiene la función necesaria).
+
 ## Teléfonos nuevos (automático)
 
 El botón **Teléfonos nuevos** muestra los lanzamientos de las marcas populares (Apple, Samsung, Xiaomi, Motorola, Huawei, Honor, Google, OnePlus, Oppo, Realme, Vivo, Nokia, Infinix, Tecno), con botones por marca. Cada día, GitHub busca solo los nuevos en Wikidata (flujo "Buscar teléfonos nuevos"), guarda `data/novedades.json` y vuelve a publicar la web. Para buscar ya: Actions → "Buscar teléfonos nuevos" → Run workflow. El administrador puede agregar uno o todos a su lista de modelos con un toque. Wikidata puede tardar en tener un modelo recién salido.

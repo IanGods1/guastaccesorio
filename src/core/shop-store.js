@@ -1,4 +1,5 @@
 // Copia local de productos, movimientos y cierres + escritura. Observable, como Store.
+import { nextBarcode } from './barcode.js';
 import { saleDoc, stockDoc, closingDoc, closingId, newId, parseCajas } from './shop.js';
 
 export class ShopStore {
@@ -26,7 +27,7 @@ export class ShopStore {
   }
 
   setProducts(docs) {
-    this.products = Object.fromEntries(Object.entries(docs).map(([id, d]) => [id, { id, name: String(d.name ?? ''), price: Number(d.price ?? 0), cajas: parseCajas(d.cajas) }]));
+    this.products = Object.fromEntries(Object.entries(docs).map(([id, d]) => [id, { id, name: String(d.name ?? ''), price: Number(d.price ?? 0), cajas: parseCajas(d.cajas), barcode: typeof d.barcode === 'string' ? d.barcode : '' }]));
     this.loaded.products = true;
     this.emit();
   }
@@ -74,9 +75,26 @@ export class ShopStore {
   }
 
   // Solo administrador
-  saveProduct({ id = null, name, price, cajas = ['1', '2'], initialStock = 0, by = 'admin' }) {
+  /** Todos los códigos de barras que ya existen. */
+  barcodes() {
+    return Object.values(this.products).map((p) => p.barcode).filter(Boolean);
+  }
+
+  /** Producto que tiene ese código (o undefined). */
+  byBarcode(code) {
+    return Object.values(this.products).find((p) => p.barcode && p.barcode === code);
+  }
+
+  /**
+   * Guarda un producto. `barcode` es el código nuevo ('' = sin código). Si cambia, se registra el nuevo en
+   * "barcodes" (la nube rechaza un código repetido) y se libera el anterior.
+   */
+  saveProduct({ id = null, name, price, cajas = ['1', '2'], initialStock = 0, barcode = '', by = 'admin' }) {
     const pid = id ?? newId();
-    const writes = [{ col: 'products', id: pid, doc: { name: name.trim(), price, cajas: parseCajas(cajas) } }];
+    const old = id ? (this.products[id]?.barcode ?? '') : '';
+    const writes = [{ col: 'products', id: pid, doc: { name: name.trim(), price, cajas: parseCajas(cajas), ...(barcode ? { barcode } : {}) } }];
+    if (barcode && barcode !== old) writes.push({ col: 'barcodes', id: barcode, doc: { productId: pid } });
+    if (old && old !== barcode) writes.push({ col: 'barcodes', id: old, doc: null });
     if (!id && initialStock > 0) writes.push({ col: 'moves', id: newId(), doc: stockDoc({ product: { id: pid, name: name.trim() }, qty: initialStock, kind: 'in', by }) });
     return this.write(writes);
   }
@@ -86,7 +104,26 @@ export class ShopStore {
   }
 
   deleteProduct(id) {
-    return this.write([{ col: 'products', id, doc: null }]);
+    const code = this.products[id]?.barcode;
+    return this.write([{ col: 'products', id, doc: null }, ...(code ? [{ col: 'barcodes', id: code, doc: null }] : [])]);
+  }
+
+  /** Cuántos productos todavía no tienen código. */
+  missingBarcodes() {
+    return Object.values(this.products).filter((p) => !p.barcode);
+  }
+
+  /** Le pone un código interno único a cada producto que no tiene. Devuelve cuántos. */
+  assignMissingBarcodes() {
+    const used = this.barcodes();
+    const writes = [];
+    for (const p of this.missingBarcodes().sort((a, b) => a.name.localeCompare(b.name, 'es'))) {
+      const code = nextBarcode(used);
+      used.push(code);
+      writes.push({ col: 'products', id: p.id, doc: { name: p.name, price: p.price, cajas: p.cajas, barcode: code } });
+      writes.push({ col: 'barcodes', id: code, doc: { productId: p.id } });
+    }
+    return writes.length ? this.write(writes).then(() => writes.length / 2) : Promise.resolve(0);
   }
 
   deleteMove(id) {

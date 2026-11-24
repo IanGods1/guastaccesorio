@@ -19,6 +19,7 @@ import { PasteScreen } from './ui/paste.js';
 import { ScanScreen } from './ui/scan.js';
 import { SalesScreen } from './ui/sales.js';
 import { InventoryScreen } from './ui/inventory.js';
+import { LabelsScreen } from './ui/labels.js';
 import { ShopStore } from './core/shop-store.js';
 import { themeCss, barColor, DEFAULT_COLOR } from './core/theme.js';
 
@@ -96,6 +97,7 @@ function routeScreen({ path, query }) {
   if (path === '/models') return ModelsScreen(app, { admin: false });
   if (path === '/sales') return SalesScreen(app);
   if (path === '/inventory') return InventoryScreen(app);
+  if (admin && path === '/labels') return LabelsScreen(app);
   if (path === '/releases') return ReleasesScreen(app);
   // Pantallas de administración: no existen para el trabajador.
   if (!admin) return null;

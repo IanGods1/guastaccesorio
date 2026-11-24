@@ -116,3 +116,37 @@ test('shop: cada producto se vende en una caja o en las dos', () => {
   assert.equal(cajasLabel(['2']), 'Solo Caja 2');
   assert.equal(cajasLabel(['1', '2']), 'Las dos cajas');
 });
+
+test('shop: el código de barras nunca se repite (la nube lo rechaza)', async () => {
+  const cloud = newCloud();
+  const admin = new MemoryBackend(cloud);
+  await admin.createOrSignInAdmin('adm');
+  const a = new ShopStore(admin);
+  admin.listen({ onProducts: (d) => a.setProducts(d), onMoves: (d) => a.setMoves(d), onClosings: (d) => a.setClosings(d), onError: () => {} });
+  await new Promise((r) => setTimeout(r, 5));
+  const { nextBarcode } = await import('../src/core/barcode.js');
+  const c1 = nextBarcode(a.barcodes());
+  await a.saveProduct({ name: 'Cargador A', price: 50, barcode: c1 });
+  assert.equal(a.byBarcode(c1).name, 'Cargador A');
+  // otro producto con el mismo código: se rechaza y no queda nada guardado
+  await assert.rejects(() => a.saveProduct({ name: 'Cargador B', price: 60, barcode: c1 }), /permission|denied/i);
+  assert.equal(a.productList().length, 1);
+  // productos sin código: se les asigna uno distinto a cada uno
+  await a.saveProduct({ name: 'Bocina', price: 200 });
+  await a.saveProduct({ name: 'Audífonos', price: 80 });
+  assert.equal(a.missingBarcodes().length, 2);
+  assert.equal(await a.assignMissingBarcodes(), 2);
+  const codes = a.barcodes();
+  assert.equal(codes.length, 3);
+  assert.equal(new Set(codes).size, 3);
+  assert.equal(a.missingBarcodes().length, 0);
+  // cambiar el código libera el anterior; borrar el producto libera el suyo
+  const bocina = a.productList().find((p) => p.name === 'Bocina');
+  const oldCode = bocina.barcode;
+  const fresh = nextBarcode(a.barcodes());
+  await a.saveProduct({ id: bocina.id, name: 'Bocina', price: 200, barcode: fresh });
+  assert.equal(a.byBarcode(fresh).name, 'Bocina');
+  assert.equal(oldCode in cloud.barcodes, false);
+  await a.deleteProduct(bocina.id);
+  assert.equal(fresh in cloud.barcodes, false);
+});

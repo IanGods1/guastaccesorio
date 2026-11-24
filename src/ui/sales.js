@@ -1,6 +1,7 @@
 // Ventas del día: cada trabajador anota lo que vende en su caja (1 o 2) y al final cierra el día
 // con el fondo que deja. Lo anotado no se puede editar ni borrar; solo el administrador corrige.
 import { h, clear, icon, appBar, bigButton, choiceRow, emptyState, openDialog, toast } from './dom.js';
+import { normalizeCode } from '../core/barcode.js';
 import { money, parseMoney, parseQty, dayString, stockMap, daySales, byProduct, dayOverview, productInCaja, CAJAS } from '../core/shop.js';
 
 const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
@@ -29,6 +30,15 @@ export function SalesScreen(app) {
 
   // Campos fijos (así no pierden el foco cuando llegan datos nuevos)
   const select = h('select', { class: 'input', 'aria-label': 'Producto', onchange: () => onProduct() });
+  // Lector de códigos (USB o Bluetooth): escribe el código y manda Enter; también se puede teclear.
+  const scan = h('input', {
+    class: 'input', type: 'text', inputmode: 'numeric', placeholder: 'Escanea o escribe el código de barras', autocomplete: 'off', 'aria-label': 'Código de barras',
+    onkeydown: (e) => {
+      if (e.key !== 'Enter') return;
+      e.preventDefault();
+      onScan(scan.value.trim());
+    },
+  });
   const qty = h('input', { class: 'input qty', type: 'text', inputmode: 'numeric', value: '1', 'aria-label': 'Cantidad' });
   const price = h('input', { class: 'input', type: 'text', inputmode: 'decimal', placeholder: '0.00', 'aria-label': 'Precio de cada uno' });
   const dateInput = h('input', { class: 'input', type: 'date', value: dayString(), max: dayString(), onchange: (e) => ((state.dayOverride = e.target.value && e.target.value !== dayString() ? e.target.value : null), render()) });
@@ -66,6 +76,19 @@ export function SalesScreen(app) {
   function onProduct() {
     const p = shop.products[select.value];
     price.value = p ? String(p.price) : '';
+  }
+
+  function onScan(raw) {
+    scan.value = '';
+    if (!raw) return;
+    const p = shop.byBarcode(normalizeCode(raw) ?? raw);
+    if (!p) return toast(`No existe el código ${raw}`);
+    if (!productInCaja(p, state.caja)) return toast(`"${p.name}" no se vende en la Caja ${state.caja}`);
+    select.value = p.id;
+    onProduct();
+    qty.value = '1';
+    toast(`${p.name} · ${money(p.price)}`);
+    scan.focus();
   }
 
   async function sell() {
@@ -167,6 +190,7 @@ export function SalesScreen(app) {
             'div',
             { class: 'card step' },
             h('div', { class: 'step-title' }, `Anotar una venta · Caja ${state.caja}`),
+            h('label', { class: 'field' }, h('span', { class: 'field-label' }, 'Código de barras'), scan),
             h('label', { class: 'field' }, h('span', { class: 'field-label' }, 'Producto'), select),
             h('div', { class: 'row' }, h('label', { class: 'field grow' }, h('span', { class: 'field-label' }, 'Cantidad'), qty), h('label', { class: 'field grow' }, h('span', { class: 'field-label' }, 'Precio de cada uno (Q)'), price)),
             bigButton('Anotar venta', sell, { icon: 'add' }),

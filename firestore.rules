@@ -99,6 +99,15 @@ service cloud.firestore {
       allow update, delete: if isAdmin();
     }
 
+    // Códigos de barras: el id del documento ES el código, así que dos productos nunca pueden
+    // tener el mismo (crear un documento que ya existe se rechaza). Solo crear o borrar.
+    match /barcodes/{code} {
+      allow read: if isAdmin();
+      allow create: if isAdmin() && code.matches('^[0-9]{13}$');
+      allow update: if false;
+      allow delete: if isAdmin();
+    }
+
     // Todo lo demás está prohibido.
     match /{document=**} {
       allow read, write: if false;

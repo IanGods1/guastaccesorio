@@ -149,6 +149,7 @@ export class MemoryBackend {
 
   /** Imita las reglas de Firestore: el trabajador solo puede ANOTAR ventas y CERRAR el día (nunca editar ni borrar). */
   allowed(w) {
+    if (w.col === 'barcodes' && w.doc !== null && w.id in (this.cloud.barcodes ?? {})) return false; // el código ya existe: la nube lo rechaza
     if (this.isAdminSignedIn()) return true;
     if (!this.canRead() || this.user?.kind !== 'worker') return false;
     const col = this.cloud[w.col] ?? {};
