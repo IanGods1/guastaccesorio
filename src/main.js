@@ -148,6 +148,7 @@ function startSync() {
     onProducts: (docs) => shop.setProducts(docs),
     onMoves: (docs) => shop.setMoves(docs),
     onClosings: (docs) => shop.setClosings(docs),
+    ...(auth.role === 'ADMIN' ? { onCosts: (docs) => shop.setCosts(docs) } : {}),
     onError: (e) => {
       // Si la nube rechaza la lectura, puede ser que cambió la contraseña de trabajador.
       if (e.kind === 'permission-denied') auth.checkWorkerPasswordChanged();

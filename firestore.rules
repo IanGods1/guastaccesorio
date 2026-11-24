@@ -99,6 +99,11 @@ service cloud.firestore {
       allow update, delete: if isAdmin();
     }
 
+    // Precio de costo de cada producto: SOLO el administrador (los trabajadores no lo ven).
+    match /costs/{id} {
+      allow read, write: if isAdmin();
+    }
+
     // Códigos de barras: el id del documento ES el código, así que dos productos nunca pueden
     // tener el mismo (crear un documento que ya existe se rechaza). Solo crear o borrar.
     match /barcodes/{code} {

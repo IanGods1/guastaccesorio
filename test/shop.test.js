@@ -177,3 +177,32 @@ test('shop: buscar por nombre, precio, categoría o código', () => {
   assert.deepEqual(CATEGORIES.slice(0, 7), ['Protectores', 'Cargadores', 'Cables', 'Bocinas', 'Gorras', 'Accesorios infantil', 'Accesorios para hombres']);
   assert.ok(categoriesIn({ x: { category: 'Juguetes' } }).includes('Juguetes'));
 });
+
+test('shop: el costo es solo del administrador; el precio para dar lo ven todos', async () => {
+  const cloud = newCloud();
+  const admin = new MemoryBackend(cloud);
+  await admin.createOrSignInAdmin('adm');
+  await admin.writeInitialConfig('tok', 'salt', 1);
+  const worker = new MemoryBackend(cloud);
+  await worker.startWorkerSession('tok');
+  const a = new ShopStore(admin);
+  const w = new ShopStore(worker);
+  let workerSawCosts = false;
+  admin.listen({ onProducts: (d) => a.setProducts(d), onMoves: (d) => a.setMoves(d), onClosings: (d) => a.setClosings(d), onCosts: (d) => a.setCosts(d), onError: () => {} });
+  worker.listen({ onProducts: (d) => w.setProducts(d), onMoves: (d) => w.setMoves(d), onClosings: (d) => w.setClosings(d), onCosts: () => (workerSawCosts = true), onError: () => {} });
+  await new Promise((r) => setTimeout(r, 5));
+  await a.saveProduct({ name: 'Cargador', price: 50, give: 45, cost: 30 });
+  const p = a.productList()[0];
+  assert.equal(a.costOf(p.id), 30);
+  assert.equal(p.give, 45);
+  assert.equal(w.productList()[0].give, 45); // el trabajador ve el precio para dar
+  assert.equal(workerSawCosts, false); // y no recibe los costos
+  assert.equal(w.costOf(p.id), 0);
+  // el trabajador no puede escribir costos ni cambiar precios
+  await assert.rejects(() => worker.commit([{ col: 'costs', id: p.id, doc: { cost: 1 } }]));
+  // editar el producto conserva el precio para dar; quitar el costo lo borra
+  await a.saveProduct({ id: p.id, name: 'Cargador', price: 55, give: 45, cost: 0 });
+  assert.equal(a.productList()[0].give, 45);
+  assert.equal(a.costOf(p.id), 0);
+  assert.equal(p.id in (cloud.costs ?? {}), false);
+});

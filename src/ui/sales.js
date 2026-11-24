@@ -94,7 +94,7 @@ export function SalesScreen(app) {
         ? h(
             'div',
             { class: 'picked' },
-            h('div', { class: 'grow' }, h('div', { class: 'li-title' }, chosen.name), h('div', { class: 'li-sub' }, `${chosen.category || NO_CATEGORY} · ${money(chosen.price)} · quedan ${stocks[chosen.id] ?? 0}`)),
+            h('div', { class: 'grow' }, h('div', { class: 'li-title' }, chosen.name), h('div', { class: 'li-sub' }, `${chosen.category || NO_CATEGORY} · ${money(chosen.price)}${chosen.give ? ` · para dar ${money(chosen.give)}` : ''} · quedan ${stocks[chosen.id] ?? 0}`)),
             h('button', { class: 'link-btn', type: 'button', onclick: () => ((state.productId = ''), (price.value = ''), renderPicker(), search.focus()) }, 'Cambiar'),
           )
         : null,
@@ -108,7 +108,7 @@ export function SalesScreen(app) {
                   'button',
                   { class: 'list-item', type: 'button', onclick: () => choose(p) },
                   h('div', { class: 'grow' }, h('div', { class: 'li-title' }, p.name), h('div', { class: 'li-sub' }, `${p.category || NO_CATEGORY} · quedan ${stocks[p.id] ?? 0}`)),
-                  h('b', null, money(p.price)),
+                  h('div', { class: 'price-col' }, h('b', null, money(p.price)), p.give ? h('div', { class: 'li-sub' }, `dar ${money(p.give)}`) : null),
                 ),
               ),
             )
@@ -130,6 +130,7 @@ export function SalesScreen(app) {
       body: [
         h('p', { class: 'bold' }, `${q} × ${product.name} a ${money(pr)} = ${money(q * pr)}`),
         h('p', null, `Caja ${state.caja}. Después de anotarla no se puede cambiar ni borrar.`),
+        product.give && pr < product.give ? h('p', { class: 'warn' }, `Ojo: el precio está por debajo de lo más bajo que se puede dar (${money(product.give)}).`) : null,
         q > left ? h('p', { class: 'warn' }, `Ojo: en el inventario ${left <= 0 ? 'no hay' : `solo hay ${left}`}. Revisa la cantidad.`) : null,
       ],
       confirmText: 'Sí, anotar',
@@ -182,6 +183,22 @@ export function SalesScreen(app) {
     if (ok) shop.reopenDay(day(), state.caja).catch(() => {});
   }
 
+  /** Ganancia del día (venta − costo actual de cada producto). null si no hay costos anotados. */
+  function profit(d) {
+    const sales = daySales(shop.moves, d).sales;
+    if (!sales.length) return null;
+    let withCost = 0;
+    let total = 0;
+    for (const s of sales) {
+      const c = shop.costOf(s.productId);
+      if (c) {
+        withCost++;
+        total += s.qty * (s.price - c);
+      }
+    }
+    return withCost ? Math.round(total * 100) / 100 : null;
+  }
+
   function render() {
     const d = day();
     const ov = dayOverview(shop.moves, shop.closings, d);
@@ -203,6 +220,7 @@ export function SalesScreen(app) {
           ),
         ),
         h('div', { class: 'ov-total' }, h('span', null, 'Total vendido'), h('b', null, money(ov.total))),
+        isAdmin && profit(d) !== null ? h('div', { class: 'ov-total' }, h('span', null, 'Ganancia aproximada'), h('b', null, money(profit(d)))) : null,
         ov.cajas.some((c) => c.closed) ? h('div', { class: 'ov-total' }, h('span', null, 'Fondo dejado'), h('b', null, money(ov.fondo))) : null,
       ),
     );

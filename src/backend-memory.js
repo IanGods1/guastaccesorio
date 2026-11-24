@@ -128,8 +128,8 @@ export class MemoryBackend {
     return false;
   }
 
-  listen({ onModels, onGroups, onProducts, onMoves, onClosings, onError }) {
-    const l = { onModels, onGroups, onProducts, onMoves, onClosings, onError };
+  listen({ onModels, onGroups, onProducts, onMoves, onClosings, onCosts, onError }) {
+    const l = { onModels, onGroups, onProducts, onMoves, onClosings, onCosts, onError };
     this.dataListeners.add(l);
     queueMicrotask(() => this.notifyOne(l));
     return () => this.dataListeners.delete(l);
@@ -137,7 +137,8 @@ export class MemoryBackend {
 
   notifyOne(l) {
     if (!this.canRead()) return l.onError(err('permission-denied'));
-    for (const [cb, col] of [[l.onModels, 'models'], [l.onGroups, 'groups'], [l.onProducts, 'products'], [l.onMoves, 'moves'], [l.onClosings, 'closings']]) {
+    for (const [cb, col] of [[l.onModels, 'models'], [l.onGroups, 'groups'], [l.onProducts, 'products'], [l.onMoves, 'moves'], [l.onClosings, 'closings'], [l.onCosts, 'costs']]) {
+      if (col === 'costs' && !this.isAdminSignedIn()) continue; // los costos solo los lee el administrador
       if (cb) cb(structuredClone(this.cloud[col] ?? {}));
     }
   }

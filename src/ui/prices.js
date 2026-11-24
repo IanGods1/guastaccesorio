@@ -5,6 +5,7 @@ import { normalizeCode } from '../core/barcode.js';
 
 export function PricesScreen(app) {
   const shop = app.shop;
+  const isAdmin = app.auth.role === 'ADMIN';
   let query = '';
   let category = '';
   const chips = h('div', { class: 'brand-filter' });
@@ -41,7 +42,7 @@ export function PricesScreen(app) {
             'div',
             { class: 'list-item' },
             h('div', { class: 'grow' }, h('div', { class: 'li-title' }, p.name), h('div', { class: 'li-sub' }, `${p.category || NO_CATEGORY} · ${n <= 0 ? 'agotado' : `hay ${n}`}`)),
-            h('b', { class: 'price-big' }, money(p.price)),
+            h('div', { class: 'price-col' }, h('b', { class: 'price-big' }, money(p.price)), p.give ? h('div', { class: 'li-sub' }, `Para dar: ${money(p.give)}`) : null, isAdmin && shop.costOf(p.id) ? h('div', { class: 'li-sub' }, `Costo ${money(shop.costOf(p.id))} · gana ${money(p.price - shop.costOf(p.id))}`) : null),
           );
         }),
       ),

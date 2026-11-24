@@ -48,6 +48,12 @@ La web tiene un diseño nuevo: buscador grande con degradado, accesos en mosaico
 - **Buscar** en Inventario, Ventas y Precios: por nombre, categoría, código de barras o **precio** ("50" o "Q50" encuentra los de ese precio y los que empiezan con 50).
 - **Precios** (botón en el inicio, para todos): lista de productos con su precio grande para decir "a cómo sale", con botones por categoría y buscador.
 
+## Precio de costo y precio para dar
+
+**Publica otra vez `firestore.rules`** (agrega `costs`).
+
+Cada producto tiene tres precios: **costo** (lo que te cuesta; **solo el administrador lo ve**, se guarda aparte en `costs`), **venta** (a cómo sale) y **para dar** (lo más bajo que se puede dar; lo ven los trabajadores). Al anotar una venta por debajo del precio para dar, la app avisa antes de confirmar (no lo bloquea). El administrador ve en Precios el costo y cuánto gana, en Inventario el valor a costo, y en Ventas la ganancia aproximada del día (venta − costo actual).
+
 ## Códigos de barras y etiquetas
 
 **Publica otra vez `firestore.rules`** (agrega la colección `barcodes`).

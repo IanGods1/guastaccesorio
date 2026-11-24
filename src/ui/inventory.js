@@ -20,6 +20,8 @@ export function InventoryScreen(app) {
   function productDialog(product) {
     const name = h('input', { class: 'input', value: product?.name ?? '', placeholder: 'ej. Ventilador', autocapitalize: 'sentences' });
     const price = h('input', { class: 'input', value: product ? String(product.price) : '', inputmode: 'decimal', placeholder: 'ej. 120 o 49.50' });
+    const cost = h('input', { class: 'input', value: product && shop.costOf(product.id) ? String(shop.costOf(product.id)) : '', inputmode: 'decimal', placeholder: 'ej. 80 (solo lo ves tú)' });
+    const give = h('input', { class: 'input', value: product?.give ? String(product.give) : '', inputmode: 'decimal', placeholder: 'ej. 100 (lo más bajo que se da)' });
     const stock = h('input', { class: 'input', value: '', inputmode: 'numeric', placeholder: product ? 'ej. 10 (suma) o -2 (resta)' : 'ej. 20' });
     // Código de barras: se genera solo y único; se puede escribir o escanear uno de fábrica.
     const code = h('input', { class: 'input', value: product?.barcode || nextBarcode(shop.barcodes()), inputmode: 'numeric', placeholder: 'Se genera solo', autocomplete: 'off' });
@@ -40,7 +42,9 @@ export function InventoryScreen(app) {
       title: product ? product.name : 'Agregar producto',
       body: [
         h('label', { class: 'field' }, h('span', { class: 'field-label' }, 'Nombre'), name),
-        h('label', { class: 'field' }, h('span', { class: 'field-label' }, 'Precio (Q)'), price),
+        h('label', { class: 'field' }, h('span', { class: 'field-label' }, 'Precio de costo (Q) · solo lo ve el administrador'), cost),
+        h('label', { class: 'field' }, h('span', { class: 'field-label' }, 'Precio de venta (Q) · a cómo sale'), price),
+        h('label', { class: 'field' }, h('span', { class: 'field-label' }, 'Precio para dar (Q) · lo más bajo que se puede dar'), give),
         h('div', { class: 'field' }, h('span', { class: 'field-label' }, 'Categoría'), catSelect, catOther),
         h('div', { class: 'field' }, h('span', { class: 'field-label' }, 'Código de barras (único)'), code, h('p', { class: 'small muted' }, 'Ya viene uno libre. Si el producto trae código de fábrica, escríbelo o escanéalo aquí. Déjalo vacío para no usar código.')),
         h('label', { class: 'field' }, h('span', { class: 'field-label' }, product ? `Cambiar existencias (ahora hay ${left})` : 'Cuántos hay en existencia'), stock),
@@ -61,15 +65,20 @@ export function InventoryScreen(app) {
             if (st === null) return void (error.textContent = 'Las existencias deben ser un número entero.');
             const category = catSelect.value === OTHER ? catOther.value.trim().replace(/\s+/g, ' ') : catSelect.value;
             if (catSelect.value === OTHER && !category) return void (error.textContent = 'Escribe el nombre de la categoría.');
+            const costN = cost.value.trim() === '' ? 0 : parseMoney(cost.value);
+            const giveN = give.value.trim() === '' ? 0 : parseMoney(give.value);
+            if (costN === null) return void (error.textContent = 'El costo no es válido. Escribe un número, por ejemplo 80 o 79.50.');
+            if (giveN === null) return void (error.textContent = 'El precio para dar no es válido. Escribe un número, por ejemplo 100.');
+            if (giveN > pr) return void (error.textContent = 'El precio para dar no puede ser mayor que el precio de venta.');
             const raw = code.value.trim();
             const bc = raw === '' ? '' : normalizeCode(raw);
             if (bc === null) return void (error.textContent = 'El código no es válido: debe ser EAN-13 (13 dígitos) o UPC-A (12 dígitos) con su dígito verificador.');
             if (bc && Object.values(shop.products).some((p) => p.barcode === bc && p.id !== product?.id)) return void (error.textContent = `Ese código ya lo tiene "${shop.byBarcode(bc).name}". Cada producto necesita uno distinto.`);
             if (!product && Object.values(shop.products).some((p) => normalize(p.name) === normalize(n))) return void (error.textContent = 'Ya existe un producto con ese nombre.');
             if (product) {
-              shop.saveProduct({ id: product.id, name: n, price: pr, category, barcode: bc }).catch(() => {});
+              shop.saveProduct({ id: product.id, name: n, price: pr, category, give: giveN, cost: costN, barcode: bc }).catch(() => {});
               if (st !== 0) shop.addStock({ id: product.id, name: n }, st).catch(() => {});
-            } else shop.saveProduct({ name: n, price: pr, category, barcode: bc, initialStock: Math.max(0, st) }).catch(() => {});
+            } else shop.saveProduct({ name: n, price: pr, category, give: giveN, cost: costN, barcode: bc, initialStock: Math.max(0, st) }).catch(() => {});
             close();
             toast(product ? 'Producto actualizado' : 'Producto agregado');
           },
@@ -101,9 +110,10 @@ export function InventoryScreen(app) {
       return clear(list, emptyState(all.length ? 'No se encontró ese producto' : 'Todavía no hay productos', isAdmin && !all.length ? 'Agrega el primero con el botón de abajo.' : null));
     }
     const worth = all.reduce((s, p) => s + Math.max(0, stocks[p.id] ?? 0) * p.price, 0);
+    const atCost = all.reduce((s, p) => s + Math.max(0, stocks[p.id] ?? 0) * shop.costOf(p.id), 0);
     clear(
       list,
-      isAdmin ? h('p', { class: 'muted small center' }, `${all.length} productos · valor en existencia ${money(worth)}`) : null,
+      isAdmin ? h('p', { class: 'muted small center' }, `${all.length} productos · valor a la venta ${money(worth)}${atCost ? ` · a costo ${money(atCost)}` : ''}`) : null,
       h(
         'div',
         { class: 'card' },
@@ -113,7 +123,7 @@ export function InventoryScreen(app) {
           return h(
             isAdmin ? 'button' : 'div',
             { class: 'list-item', type: isAdmin ? 'button' : undefined, onclick: isAdmin ? () => productDialog(p) : undefined },
-            h('div', { class: 'grow' }, h('div', { class: 'li-title' }, p.name), h('div', { class: 'li-sub' }, `${p.category || NO_CATEGORY} · ${money(p.price)}${p.barcode ? ` · ${p.barcode}` : ''}${soldToday[p.id] ? ` · hoy se vendieron ${soldToday[p.id]}` : ''}`)),
+            h('div', { class: 'grow' }, h('div', { class: 'li-title' }, p.name), h('div', { class: 'li-sub' }, `${p.category || NO_CATEGORY} · ${money(p.price)}${p.give ? ` (dar ${money(p.give)})` : ''}${isAdmin && shop.costOf(p.id) ? ` · costo ${money(shop.costOf(p.id))}` : ''}${p.barcode ? ` · ${p.barcode}` : ''}${soldToday[p.id] ? ` · hoy se vendieron ${soldToday[p.id]}` : ''}`)),
             h('span', { class: `stock ${cls}` }, n <= 0 ? 'Agotado' : `${n} en existencia`),
             isAdmin ? icon('chevron') : null,
           );

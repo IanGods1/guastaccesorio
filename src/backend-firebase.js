@@ -221,7 +221,7 @@ export class FirebaseBackend {
   // ---------------------------------------------------------------- Datos
 
   /** Escucha modelos y grupos. Los callbacks reciben {id: documento}. Devuelve una función para parar. */
-  listen({ onModels, onGroups, onProducts, onMoves, onClosings, onError }) {
+  listen({ onModels, onGroups, onProducts, onMoves, onClosings, onCosts, onError }) {
     const toMap = (snap) => Object.fromEntries(snap.docs.map((d) => [d.id, d.data()]));
     const subs = [
       ['models', onModels],
@@ -229,6 +229,7 @@ export class FirebaseBackend {
       ['products', onProducts],
       ['moves', onMoves],
       ['closings', onClosings],
+      ['costs', onCosts],
     ]
       .filter(([, cb]) => cb)
       .map(([name, cb]) => onSnapshot(collection(this.db, name), (s) => cb(toMap(s)), (e) => onError(mapError(e))));

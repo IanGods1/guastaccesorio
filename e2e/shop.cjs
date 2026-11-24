@@ -41,6 +41,10 @@ const log = (m) => console.log(`  ✓ ${m}`);
     await btn('Agregar producto').click();
     await page.getByPlaceholder('ej. Ventilador').fill(name);
     await page.getByPlaceholder('ej. 120 o 49.50').fill(price);
+    if (name === 'Ventilador') {
+      await page.getByPlaceholder('ej. 80 (solo lo ves tú)').fill('80');
+      await page.getByPlaceholder('ej. 100 (lo más bajo que se da)').fill('100');
+    }
     await page.getByPlaceholder('ej. 20').fill(stock);
     await btn('Guardar').click();
     await text(name, { exact: true }).waitFor();
@@ -132,6 +136,7 @@ const log = (m) => console.log(`  ✓ ${m}`);
   await page.getByLabel('Cantidad').fill('2');
   await page.getByLabel('Precio de cada uno').fill('45');
   await btn('Anotar venta').click();
+  await text('por debajo de lo más bajo que se puede dar (Q100.00)').waitFor(); // avisa si baja del precio para dar
   await btn('Sí, anotar').click();
   await text('2 × Ventilador', { exact: true }).waitFor();
   await text('Q210.00').first().waitFor();
@@ -188,6 +193,8 @@ const log = (m) => console.log(`  ✓ ${m}`);
   await page.goto(url + '#/prices');
   await text('Ventilador', { exact: true }).waitFor();
   await text('Q120.00').waitFor();
+  await text('Para dar: Q100.00').waitFor(); // el trabajador ve el precio para dar
+  assert.equal(await text(/Costo Q/).count(), 0); // pero no el costo
   await page.getByLabel('Buscar precio').fill('50');
   await text('Cargador', { exact: true }).waitFor();
   assert.equal(await text('Ventilador', { exact: true }).count(), 0);
@@ -210,6 +217,11 @@ const log = (m) => console.log(`  ✓ ${m}`);
   await text('Total vendido').waitFor();
   await text('Q260.00').first().waitFor();
   await text('Lo que se vendió (las dos cajas)').waitFor();
+  await text('Ganancia aproximada').waitFor(); // el administrador ve su ganancia (venta − costo)
+  await page.goto(url + '#/prices');
+  await text('Costo Q80.00 · gana Q40.00').waitFor();
+  await page.goBack();
+  await text('Total vendido').waitFor();
   await shot('5-admin');
   await btn(/Caja 1/).click();
   await btn('Reabrir este día (administrador)').click();
