@@ -1,7 +1,8 @@
 // Precios: buscar un producto (por nombre, precio, categoría o código) para decir "a cómo sale".
-import { h, clear, appBar, emptyState } from './dom.js';
+import { h, clear, appBar, emptyState, toast } from './dom.js';
 import { money, stockMap, searchProducts, categoriesIn, NO_CATEGORY } from '../core/shop.js';
 import { normalizeCode } from '../core/barcode.js';
+import { openScanner, scanButton } from './scanner.js';
 
 export function PricesScreen(app) {
   const shop = app.shop;
@@ -51,5 +52,5 @@ export function PricesScreen(app) {
   }
 
   render();
-  return { el: h('div', { class: 'screen' }, appBar({ title: 'Precios', subtitle: 'A cómo sale cada producto', onBack: () => app.router.back('/') }), h('main', { class: 'content' }, input, chips, list)), update: render };
+  return { el: h('div', { class: 'screen' }, appBar({ title: 'Precios', subtitle: 'A cómo sale cada producto', onBack: () => app.router.back('/') }), h('main', { class: 'content' }, h('div', { class: 'search-row' }, input, scanButton(() => openScanner({ onCode: (c) => { const p = shop.byBarcode(normalizeCode(c) ?? c); if (p) { query = p.name; input.value = p.name; render(); } else toast(`No existe el código ${c}`); } }))), chips, list)), update: render };
 }

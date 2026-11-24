@@ -35,7 +35,7 @@ const log = (m) => console.log(`  ✓ ${m}`);
   for (let i = 0; i < 4; i++) await pw.nth(i).fill(i < 2 ? 'admin-secreta' : 'trabajo-123');
   await btn('Crear contraseñas').click();
   await text('¿Qué modelo buscas?').waitFor();
-  await btn('Inventario').click();
+  await btn('Inventario', { exact: true }).click();
   await text('Todavía no hay productos').waitFor();
   for (const [name, price, stock] of [['Ventilador', '120', '20'], ['Cargador', '50', '20']]) {
     await btn('Agregar producto').click();

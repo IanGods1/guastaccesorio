@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@tesseract.js-data/eng": "^1.0.0",
+    "@zxing/library": "^0.21.3",
     "fflate": "0.8.2",
     "firebase": "11.10.0",
     "tesseract.js": "^5.1.1",

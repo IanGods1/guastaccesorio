@@ -2,6 +2,7 @@
 // con el fondo que deja. Lo anotado no se puede editar ni borrar; solo el administrador corrige.
 import { h, clear, icon, appBar, bigButton, choiceRow, emptyState, openDialog, toast } from './dom.js';
 import { normalizeCode } from '../core/barcode.js';
+import { openScanner, scanButton } from './scanner.js';
 import { profitOf, money, parseMoney, parseQty, dayString, stockMap, daySales, byProduct, dayOverview, searchProducts, CAJAS, CAJA_NAMES, NO_CATEGORY } from '../core/shop.js';
 
 const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
@@ -311,7 +312,7 @@ export function SalesScreen(app) {
             'div',
             { class: 'card step' },
             h('div', { class: 'step-title' }, `Anotar una venta · Caja ${state.caja}`),
-            h('label', { class: 'field' }, h('span', { class: 'field-label' }, 'Producto'), search),
+            h('div', { class: 'field' }, h('span', { class: 'field-label' }, 'Producto'), h('div', { class: 'search-row' }, search, scanButton(() => openScanner({ onCode: (c) => onEnter(c) })))),
             pickerHost,
             h('div', { class: 'row' }, h('label', { class: 'field grow' }, h('span', { class: 'field-label' }, 'Cantidad'), qty), h('label', { class: 'field grow' }, h('span', { class: 'field-label' }, 'Precio de cada uno (Q)'), price)),
             bigButton('Anotar venta', sell, { icon: 'add' }),

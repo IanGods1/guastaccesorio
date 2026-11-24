@@ -43,6 +43,10 @@ La web tiene un diseño nuevo: buscador grande con degradado, accesos en mosaico
 - **Administrador**: ve el total vendido y el fondo de las dos cajas de cualquier día (selector de día), lo que se vendió por producto, puede borrar una venta (vuelve al inventario) y reabrir un día cerrado.
 - Se maneja en quetzales (Q). El día es el de la fecha del teléfono. Prueba en navegador: `npm run build:test && NODE_PATH=$(npm root -g) node e2e/shop.cjs`.
 
+## Hacer inventario (conteo)
+
+Botón **Hacer inventario** en el inicio (administrador y trabajadores). Se busca el producto por **nombre, precio o código de barras** (o se toca **Escanear** para usar la cámara: cada lectura suma 1), se escribe cuántos hay y **Sumar**: si cuentas el mismo producto otra vez, **se suma solo** (5 + 15 = 20); tocando una fila se corrige la cantidad exacta. El conteo se guarda en el teléfono hasta que lo termines. **Terminar y ver el resultado** muestra lo contado contra lo que dice el sistema (diferencias) y lo que no se contó, y se manda con **Enviar por WhatsApp** (opcionalmente a un número, con código de país) o se copia. El administrador puede **Ajustar existencias a lo contado**. El escáner con la cámara también está junto al buscador de Ventas y de Precios; necesita permiso de cámara y funciona mejor con buena luz (alternativa: lector de códigos USB/Bluetooth o escribir el código). Prueba: `npm run build:test && NODE_PATH=$(npm root -g) node e2e/count.cjs` (usa ffmpeg y una cámara simulada).
+
 ## Categorías, búsqueda por precio y pantalla Precios
 
 - **Categorías** de producto: Protectores, Cargadores, Cables, Bocinas, Gorras, Accesorios infantil, Accesorios para hombres y Carros eléctricos; el administrador también puede escribir una nueva ("Otra categoría…") al agregar o editar un producto. El Inventario tiene botones por categoría.

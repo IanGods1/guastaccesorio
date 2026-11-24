@@ -34,6 +34,8 @@ cpSync('node_modules/tesseract.js/dist/tesseract.min.js', `${out}/ocr/tesseract.
 cpSync('node_modules/tesseract.js/dist/worker.min.js', `${out}/ocr/worker.min.js`);
 for (const f of ['tesseract-core-simd-lstm.wasm.js', 'tesseract-core-lstm.wasm.js']) cpSync(`node_modules/tesseract.js-core/${f}`, `${out}/ocr/core/${f}`);
 cpSync('node_modules/@tesseract.js-data/eng/4.0.0_best_int/eng.traineddata.gz', `${out}/ocr/lang/eng.traineddata.gz`);
+mkdirSync(`${out}/scan`, { recursive: true });
+cpSync('node_modules/@zxing/library/umd/index.min.js', `${out}/scan/zxing.min.js`);
 cpSync('icons', `${out}/icons`, { recursive: true });
 writeFileSync(`${out}/sw.js`, readFileSync('sw.js', 'utf8').replace('__BUILD__', buildId));
 // GitHub Pages: sin procesamiento Jekyll

@@ -76,6 +76,7 @@ export function HomeScreen(app) {
           tile({ icon: 'cart', title: 'Ventas del día', onclick: () => app.router.go('/sales') }),
           tile({ icon: 'search', title: 'Precios', onclick: () => app.router.go('/prices') }),
           tile({ icon: 'list', title: 'Historial', onclick: () => app.router.go('/history') }),
+          tile({ icon: 'check', title: 'Hacer inventario', onclick: () => app.router.go('/count') }),
           tile({ icon: 'box', title: 'Inventario', onclick: () => app.router.go('/inventory') }),
           isAdmin
             ? tile({ icon: 'edit', title: 'Administrar datos', sub: ready ? plural(nGroups, 'grupo', 'grupos') : '…', onclick: () => app.router.go('/admin') })
