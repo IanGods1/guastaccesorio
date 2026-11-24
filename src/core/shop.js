@@ -134,6 +134,20 @@ export function daySales(moves, day, caja = null) {
   return { sales, total, count };
 }
 
+/** Ganancia aproximada de unas ventas (precio vendido − costo actual). null si ningún producto tiene costo. */
+export function profitOf(sales, costOf) {
+  let withCost = 0;
+  let total = 0;
+  for (const s of sales) {
+    const c = costOf(s.productId);
+    if (c) {
+      withCost++;
+      total += s.qty * (s.price - c);
+    }
+  }
+  return withCost ? round2(total) : null;
+}
+
 /** Ventas agrupadas por producto: [{ name, qty, total }] de mayor a menor total. */
 export function byProduct(sales) {
   const map = new Map();

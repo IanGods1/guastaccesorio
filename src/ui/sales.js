@@ -2,7 +2,7 @@
 // con el fondo que deja. Lo anotado no se puede editar ni borrar; solo el administrador corrige.
 import { h, clear, icon, appBar, bigButton, choiceRow, emptyState, openDialog, toast } from './dom.js';
 import { normalizeCode } from '../core/barcode.js';
-import { money, parseMoney, parseQty, dayString, stockMap, daySales, byProduct, dayOverview, searchProducts, CAJAS, CAJA_NAMES, NO_CATEGORY } from '../core/shop.js';
+import { profitOf, money, parseMoney, parseQty, dayString, stockMap, daySales, byProduct, dayOverview, searchProducts, CAJAS, CAJA_NAMES, NO_CATEGORY } from '../core/shop.js';
 
 const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
 const fmtDay = (day) => new Date(day + 'T12:00:00').toLocaleDateString('es', { weekday: 'long', day: 'numeric', month: 'long' });
@@ -53,7 +53,7 @@ export function SalesScreen(app) {
     onSelect: (v) => ((state.caja = v), app.storage.setItem('gc_caja', v), render()),
     sublabel: (c) => {
       const o = dayOverview(shop.moves, shop.closings, day()).cajas.find((x) => x.caja === c);
-      return o.closed ? `${CAJA_NAMES[c]} · cerrada ✓` : CAJA_NAMES[c];
+      return o.closed ? `${CAJA_NAMES[c]} · guardada ✓` : CAJA_NAMES[c];
     },
   });
 
@@ -152,17 +152,17 @@ export function SalesScreen(app) {
     const fondo = h('input', { class: 'input', type: 'text', inputmode: 'decimal', placeholder: '0.00', 'aria-label': 'Fondo que dejas en la caja' });
     const error = h('p', { class: 'error-text' });
     openDialog({
-      title: `Cerrar el día · Caja ${state.caja}`,
+      title: `Guardar la cuenta · Caja ${state.caja}`,
       body: [
         h('p', null, `Vendido hoy: `, h('b', null, money(total)), ` (${plural(count, 'artículo', 'artículos')})`),
         h('label', { class: 'field' }, h('span', { class: 'field-label' }, 'Fondo que dejas en la caja (Q)'), fondo),
-        h('p', { class: 'warn' }, 'Cuando cierres el día, ya no se podrá anotar ni modificar nada de esta caja. Revisa bien.'),
+        h('p', { class: 'warn' }, 'Al guardar la cuenta, esta caja queda limpia y ya no se podrá anotar ni modificar nada de hoy. La cuenta se verá en el Historial; solo el administrador puede borrarla o reabrirla. Revisa bien.'),
         error,
       ],
       actions: [
         { label: 'Cancelar' },
         {
-          label: 'Cerrar el día',
+          label: 'Guardar cuenta',
           onClick: (close) => {
             const f = parseMoney(fondo.value);
             if (f === null) {
@@ -171,7 +171,7 @@ export function SalesScreen(app) {
             }
             close();
             shop.closeDay({ day: day(), caja: state.caja, fondo: f, sold: total, count, by }).catch(() => {});
-            toast('Día cerrado ✓');
+            toast('Cuenta guardada ✓');
           },
         },
       ],
@@ -191,8 +191,10 @@ export function SalesScreen(app) {
           'div',
           { class: 'card' },
           h('div', { class: 'both-head' }, h('div', null, h('b', null, `Caja ${c.caja}`), h('span', { class: 'muted small' }, ` · ${CAJA_NAMES[c.caja]}`)), h('div', { class: 'both-total' }, money(c.total))),
-          h('div', { class: 'small muted both-sub' }, c.closed ? `Cerrada ✓ · fondo ${money(c.fondo)}` : 'Abierta'),
-          sales.length
+          h('div', { class: 'small muted both-sub' }, c.closed ? `Cuenta guardada ✓ · fondo ${money(c.fondo)} · ya está en el Historial` : 'Abierta'),
+          c.closed
+            ? null
+            : sales.length
             ? sales.map((s) => h('div', { class: 'list-item compact' }, h('div', { class: 'grow' }, `${s.qty} × ${s.productName}`, h('span', { class: 'muted small' }, `  ${fmtTime(s.at)}`)), h('b', null, money(s.qty * s.price))))
             : h('div', { class: 'list-item compact muted' }, 'Sin ventas todavía'),
         );
@@ -264,16 +266,7 @@ export function SalesScreen(app) {
   function profit(d) {
     const sales = daySales(shop.moves, d).sales;
     if (!sales.length) return null;
-    let withCost = 0;
-    let total = 0;
-    for (const s of sales) {
-      const c = shop.costOf(s.productId);
-      if (c) {
-        withCost++;
-        total += s.qty * (s.price - c);
-      }
-    }
-    return withCost ? Math.round(total * 100) / 100 : null;
+    return profitOf(sales, (id) => shop.costOf(id));
   }
 
   function render() {
@@ -300,7 +293,7 @@ export function SalesScreen(app) {
           'div',
           { class: 'ov-grid' },
           ov.cajas.map((c) =>
-            h('div', { class: `ov-box${c.closed ? ' closed' : ''}` }, h('div', { class: 'ov-t' }, `Caja ${c.caja}`), h('div', { class: 'ov-n' }, money(c.total)), h('div', { class: 'ov-s' }, c.closed ? `Fondo ${money(c.fondo)} · cerrada ✓` : 'abierta')),
+            h('div', { class: `ov-box${c.closed ? ' closed' : ''}` }, h('div', { class: 'ov-t' }, `Caja ${c.caja}`), h('div', { class: 'ov-n' }, money(c.total)), h('div', { class: 'ov-s' }, c.closed ? `Fondo ${money(c.fondo)} · guardada ✓` : 'abierta')),
           ),
         ),
         h('div', { class: 'ov-total' }, h('span', null, 'Total vendido'), h('b', null, money(ov.total))),
@@ -332,19 +325,22 @@ export function SalesScreen(app) {
             'div',
             { class: 'card result-card' },
             h('div', { class: 'result-ok' }, icon('lock', 36)),
-            h('div', { class: 'section-title big center' }, `Caja ${state.caja} cerrada ✓`),
+            h('div', { class: 'section-title big center' }, `Cuenta de la Caja ${state.caja} guardada ✓`),
             h('p', { class: 'center' }, `Vendido ${money(mine.total)} · Fondo ${money(mine.fondo)}`),
-            h('p', { class: 'muted small center' }, 'Ya no se puede anotar ni modificar nada de este día.'),
-            isAdmin ? bigButton('Reabrir este día (administrador)', reopen, { outline: true, small: true }) : null,
+            h('p', { class: 'muted small center' }, 'Ya está en el Historial. La caja queda limpia y ya no se puede anotar ni modificar nada de este día.'),
+            bigButton('Ver en el historial', () => app.router.go(`/history?day=${d}`), { outline: true, small: true, icon: 'list' }),
+            isAdmin ? bigButton('Reabrir esta cuenta (quedar libre otra vez)', reopen, { outline: true, small: true }) : null,
           )
         : sales.length
-          ? bigButton(`Cerrar el día de la Caja ${state.caja}`, closeDay, { icon: 'lock', outline: true })
+          ? bigButton(`Guardar la cuenta de la Caja ${state.caja}`, closeDay, { icon: 'lock', outline: true })
           : null,
     );
 
     clear(
       listHost,
-      sales.length
+      mine.closed
+        ? null
+        : sales.length
         ? [
             h('div', { class: 'section-title' }, `Lo anotado en la Caja ${state.caja}`),
             h(
@@ -361,9 +357,7 @@ export function SalesScreen(app) {
               ),
             ),
           ]
-        : mine.closed
-          ? null
-          : emptyState('Todavía no hay ventas', 'Anota la primera con el formulario de arriba.'),
+        : emptyState('Todavía no hay ventas', 'Anota la primera con el formulario de arriba.'),
     );
 
     const all = daySales(shop.moves, d).sales;
@@ -396,6 +390,7 @@ export function SalesScreen(app) {
         listHost,
         summaryHost,
         bothHost,
+        bigButton('Ver el historial de cuentas', () => app.router.go('/history'), { outline: true, icon: 'list' }),
         isAdmin ? bigButton('Ver el inventario', () => app.router.go('/inventory'), { outline: true, icon: 'list' }) : null,
       ),
     ),

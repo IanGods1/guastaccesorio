@@ -159,15 +159,15 @@ const log = (m) => console.log(`  ✓ ${m}`);
   log('avisa si se quiere vender más de lo que hay');
 
   // Cierre del día con fondo
-  await btn('Cerrar el día de la Caja 1').click();
+  await btn('Guardar la cuenta de la Caja 1').click();
   await page.getByLabel('Fondo que dejas en la caja').fill('abc');
-  await btn('Cerrar el día', { exact: true }).click();
+  await btn('Guardar cuenta', { exact: true }).click();
   await text('Escribe el fondo').waitFor();
   await page.getByLabel('Fondo que dejas en la caja').fill('300');
-  await btn('Cerrar el día', { exact: true }).click();
-  await text('Caja 1 cerrada ✓').waitFor();
+  await btn('Guardar cuenta', { exact: true }).click();
+  await text('Cuenta de la Caja 1 guardada ✓').waitFor();
   assert.equal(await btn('Anotar venta').count(), 0);
-  assert.equal(await btn('Reabrir este día (administrador)').count(), 0);
+  assert.equal(await btn('Reabrir esta cuenta (quedar libre otra vez)').count(), 0);
   await shot('3-cerrada');
   const closing = Object.values((await cloud()).closings)[0];
   assert.deepEqual([closing.caja, closing.fondo, closing.sold, closing.by], ['1', 300, 210, 'worker']);
@@ -191,15 +191,30 @@ const log = (m) => console.log(`  ✓ ${m}`);
   await btn('Anotar venta').click();
   await btn('Sí, anotar').click();
   await text('1 × Cargador', { exact: true }).first().waitFor();
-  await text('Fondo Q300.00 · cerrada ✓').waitFor();
+  await text('Fondo Q300.00 · guardada ✓').waitFor();
   // Abajo salen las ventas de las DOS cajas
   await text('Ventas del día de las dos cajas').waitFor();
   assert.equal(await page.locator('.both-head').count(), 2);
-  await text('Cerrada ✓ · fondo Q300.00').waitFor();
-  assert.ok((await page.locator('.both-head').nth(0).locator('xpath=..').innerText()).includes('2 × Ventilador'));
+  await text('Cuenta guardada ✓ · fondo Q300.00 · ya está en el Historial').waitFor();
+  assert.ok(!(await page.locator('.both-head').nth(0).locator('xpath=..').innerText()).includes('2 × Ventilador')); // la cuenta guardada sale del apartado de ventas
   assert.ok((await page.locator('.both-head').nth(1).locator('xpath=..').innerText()).includes('1 × Cargador'));
   await shot('3b-dos-cajas');
-  log('abajo aparecen las ventas de las dos cajas, cada una con su total y su fondo');
+  log('la cuenta guardada deja limpia su caja y abajo se ven las dos cajas');
+
+  // Historial: lo guardado aparece ahí (el trabajador solo mira)
+  await btn('Ver el historial de cuentas').click();
+  await text('Historial de cuentas').first().waitFor();
+  await page.locator('.section-title.big', { hasText: 'Hoy' }).waitFor();
+  await text('2 × Ventilador').first().waitFor();
+  await text('Cuenta guardada ✓ · fondo Q300.00').first().waitFor();
+  assert.equal(await page.locator('[aria-label="Borrar venta"]').count(), 0);
+  assert.equal(await btn(/Reabrir/).count(), 0);
+  await shot('3c-historial');
+  await btn(/Día anterior/).click();
+  await page.locator('.section-title.big', { hasText: 'Ayer' }).waitFor();
+  await text('No hay ventas ese día').waitFor();
+  await page.goBack();
+  log('el Historial muestra las cuentas guardadas por día y el trabajador no puede borrar ni reabrir');
   log('la Caja 2 sigue abierta y ve el cierre de la Caja 1');
 
   // Inventario del trabajador: solo lectura, con lo vendido
@@ -241,19 +256,21 @@ const log = (m) => console.log(`  ✓ ${m}`);
   await text('Ganancia aproximada').waitFor(); // el administrador ve su ganancia (venta − costo)
   await page.goto(url + '#/prices');
   await text('Costo Q80.00 · gana Q40.00').waitFor();
-  await page.goBack();
-  await text('Total vendido').waitFor();
   await shot('5-admin');
-  await btn(/Caja 1/).click();
-  await btn('Reabrir este día (administrador)').click();
+
+  // Historial como administrador: puede borrar una venta y reabrir (liberar) una cuenta guardada
+  await page.goto(url + '#/history');
+  await text('Cuenta guardada ✓ · fondo Q300.00').first().waitFor();
+  assert.ok((await page.locator('[aria-label="Borrar venta"]').count()) >= 2);
+  await btn(/Reabrir esta cuenta/).click();
   await btn('Reabrir', { exact: true }).click();
-  await text('Anotar una venta · Caja 1').waitFor();
+  await text('Sin guardar').first().waitFor();
+  assert.equal(Object.keys((await cloud()).closings).length, 0);
   await page.locator('[aria-label="Borrar venta"]').first().click();
   await btn('Borrar', { exact: true }).click();
   await page.waitForTimeout(300);
   assert.equal(Object.values((await cloud()).moves).filter((m) => m.kind === 'sale').length, 2);
-  assert.equal(Object.keys((await cloud()).closings).length, 0);
-  log('el administrador ve el resumen, reabre un día y corrige una venta');
+  log('el administrador puede borrar una venta y reabrir una cuenta (queda libre otra vez) desde el Historial');
 
   assert.deepEqual(errs, [], errs.join('\n'));
   log('sin errores en la consola\n\nTODO BIEN');
