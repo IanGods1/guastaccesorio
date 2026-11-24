@@ -104,12 +104,15 @@ const log = (m) => console.log(`  ✓ ${m}`);
   await text('¿Qué modelo buscas?').waitFor();
   assert.equal(await btn('Agregar producto').count(), 0);
   await btn('Ventas del día').click();
+  // Cada trabajador usa una sola caja: la elige la primera vez y queda fija
+  await text('¿En qué caja trabajas con este teléfono?').waitFor();
+  await btn('Caja 1 · Accesorios').click();
+  await btn('Sí, Caja 1').click();
   await text('Anotar una venta · Caja 1').waitFor();
-  // Escanear: el lector escribe el código y manda Enter
+  await text('Este teléfono vende en la Caja 1').waitFor();
+  assert.equal(await btn(/^Caja 2/).count(), 0); // no puede pasarse a la otra caja
+  log('el trabajador elige su caja la primera vez y queda fija en ese teléfono');
   const searchBox = page.getByLabel('Buscar producto');
-  await text('Caja 1', { exact: true }).first().waitFor();
-  await text('Accesorios', { exact: true }).waitFor(); // letras pequeñas debajo de cada caja
-  await text('Carros eléctricos', { exact: true }).waitFor();
   await searchBox.fill('zzz');
   await text('No hay productos con "zzz"').waitFor();
   await searchBox.fill('50'); // por precio
@@ -124,7 +127,7 @@ const log = (m) => console.log(`  ✓ ${m}`);
   await searchBox.press('Enter'); // lector de códigos
   await text('Cargadores · Q50.00 · quedan 20').waitFor();
   assert.equal(await page.getByLabel('Precio de cada uno').inputValue(), '50');
-  await page.getByRole('button', { name: 'Cambiar' }).click();
+  await page.getByRole('button', { name: 'Cambiar', exact: true }).click();
   log('un código escaneado elige el producto');
   await pickProduct('ventil', 'Ventilador');
   assert.equal(await page.getByLabel('Precio de cada uno').inputValue(), '120');
@@ -170,15 +173,33 @@ const log = (m) => console.log(`  ✓ ${m}`);
   assert.deepEqual([closing.caja, closing.fondo, closing.sold, closing.by], ['1', 300, 210, 'worker']);
   log('cierra el día con el fondo y la caja queda bloqueada');
 
-  // La otra caja sigue abierta
-  await btn(/Caja 2/).click();
+  // Este teléfono no puede vender en la Caja 2; solo el administrador cambia la caja del teléfono
+  assert.equal(await text('Anotar una venta · Caja 2').count(), 0);
+  await btn('Cambiar caja').click();
+  await page.getByLabel('Contraseña de administrador').fill('mala-clave');
+  await btn('Continuar').click();
+  await text('Contraseña incorrecta.').waitFor();
+  await page.getByLabel('Contraseña de administrador').fill('admin-secreta');
+  await btn('Continuar').click();
+  await text('¿En qué caja trabajas con este teléfono?').waitFor();
+  await btn('Caja 2 · Carros eléctricos').click();
+  await btn('Sí, Caja 2').click();
   await text('Anotar una venta · Caja 2').waitFor();
+  log('solo el administrador (con su contraseña) cambia la caja de un teléfono');
   await pickProduct('carga', 'Cargador');
   await page.getByLabel('Cantidad').fill('1');
   await btn('Anotar venta').click();
   await btn('Sí, anotar').click();
-  await text('1 × Cargador', { exact: true }).waitFor();
+  await text('1 × Cargador', { exact: true }).first().waitFor();
   await text('Fondo Q300.00 · cerrada ✓').waitFor();
+  // Abajo salen las ventas de las DOS cajas
+  await text('Ventas del día de las dos cajas').waitFor();
+  assert.equal(await page.locator('.both-head').count(), 2);
+  await text('Cerrada ✓ · fondo Q300.00').waitFor();
+  assert.ok((await page.locator('.both-head').nth(0).locator('xpath=..').innerText()).includes('2 × Ventilador'));
+  assert.ok((await page.locator('.both-head').nth(1).locator('xpath=..').innerText()).includes('1 × Cargador'));
+  await shot('3b-dos-cajas');
+  log('abajo aparecen las ventas de las dos cajas, cada una con su total y su fondo');
   log('la Caja 2 sigue abierta y ve el cierre de la Caja 1');
 
   // Inventario del trabajador: solo lectura, con lo vendido

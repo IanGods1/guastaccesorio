@@ -24,7 +24,10 @@ export function SalesScreen(app) {
   const shop = app.shop;
   const isAdmin = app.auth.role === 'ADMIN';
   const by = isAdmin ? 'admin' : 'worker';
-  const state = { productId: '', caja: CAJAS.includes(app.storage.getItem('gc_caja')) ? app.storage.getItem('gc_caja') : '1', dayOverride: null };
+  // Cada trabajador usa UNA sola caja: la que elige la primera vez queda fija en este teléfono
+  // (solo el administrador puede cambiarla). El administrador puede ver y usar las dos.
+  let fixed = !isAdmin && CAJAS.includes(app.storage.getItem('gc_caja_fixed')) ? app.storage.getItem('gc_caja_fixed') : null;
+  const state = { productId: '', caja: fixed ?? (CAJAS.includes(app.storage.getItem('gc_caja')) ? app.storage.getItem('gc_caja') : '1'), dayOverride: null };
   const day = () => state.dayOverride ?? dayString();
   const isToday = () => day() === dayString();
 
@@ -54,6 +57,9 @@ export function SalesScreen(app) {
     },
   });
 
+  const chooserHost = h('div', { class: 'stack' });
+  const bannerHost = h('div');
+  const bothHost = h('div', { class: 'stack' });
   const overviewHost = h('div');
   const formHost = h('div');
   const statusHost = h('div');
@@ -173,6 +179,77 @@ export function SalesScreen(app) {
     setTimeout(() => fondo.focus(), 60);
   }
 
+  /** Abajo: las ventas del día de las DOS cajas, cada una con su total y su fondo. */
+  function renderBoth(d) {
+    const ov = dayOverview(shop.moves, shop.closings, d);
+    clear(
+      bothHost,
+      h('div', { class: 'section-title' }, 'Ventas del día de las dos cajas'),
+      ov.cajas.map((c) => {
+        const { sales } = daySales(shop.moves, d, c.caja);
+        return h(
+          'div',
+          { class: 'card' },
+          h('div', { class: 'both-head' }, h('div', null, h('b', null, `Caja ${c.caja}`), h('span', { class: 'muted small' }, ` · ${CAJA_NAMES[c.caja]}`)), h('div', { class: 'both-total' }, money(c.total))),
+          h('div', { class: 'small muted both-sub' }, c.closed ? `Cerrada ✓ · fondo ${money(c.fondo)}` : 'Abierta'),
+          sales.length
+            ? sales.map((s) => h('div', { class: 'list-item compact' }, h('div', { class: 'grow' }, `${s.qty} × ${s.productName}`, h('span', { class: 'muted small' }, `  ${fmtTime(s.at)}`)), h('b', null, money(s.qty * s.price))))
+            : h('div', { class: 'list-item compact muted' }, 'Sin ventas todavía'),
+        );
+      }),
+    );
+  }
+
+  /** Primera vez en un teléfono de trabajador: elegir la caja (queda fija). */
+  function renderChooser() {
+    clear(
+      chooserHost,
+      h(
+        'div',
+        { class: 'card step' },
+        h('div', { class: 'step-title' }, '¿En qué caja trabajas con este teléfono?'),
+        h('p', { class: 'small muted' }, 'Cada teléfono usa una sola caja y lleva sus propias ventas. Quedará fija: solo el administrador puede cambiarla.'),
+        CAJAS.map((c) =>
+          bigButton(`Caja ${c} · ${CAJA_NAMES[c]}`, async () => {
+            const ok = await ask({ title: `¿Caja ${c}?`, body: h('p', null, `Este teléfono quedará fijo en la Caja ${c} (${CAJA_NAMES[c]}). No podrás cambiarla sin el administrador.`), confirmText: `Sí, Caja ${c}` });
+            if (!ok) return;
+            app.storage.setItem('gc_caja_fixed', c);
+            fixed = c;
+            state.caja = c;
+            render();
+          }, { outline: c !== '1' }),
+        ),
+      ),
+    );
+  }
+
+  /** El administrador cambia la caja fija de este teléfono (se pide su contraseña). */
+  function changeFixed() {
+    const pw = h('input', { class: 'input', type: 'password', placeholder: 'Contraseña de administrador', autocomplete: 'off', 'aria-label': 'Contraseña de administrador' });
+    const error = h('p', { class: 'error-text' });
+    openDialog({
+      title: 'Cambiar la caja de este teléfono',
+      body: [h('p', null, 'Escribe la contraseña de administrador para elegir otra caja.'), pw, error],
+      actions: [
+        { label: 'Cancelar' },
+        {
+          label: 'Continuar',
+          onClick: async (close) => {
+            const ok = await app.backend.verifyAdminPassword(pw.value);
+            if (ok === null) return void (error.textContent = 'No se pudo comprobar. Revisa tu conexión.');
+            if (!ok) return void (error.textContent = 'Contraseña incorrecta.');
+            app.storage.removeItem('gc_caja_fixed');
+            fixed = null;
+            state.productId = '';
+            close();
+            render();
+          },
+        },
+      ],
+    });
+    setTimeout(() => pw.focus(), 60);
+  }
+
   async function removeSale(s) {
     const ok = await ask({ title: 'Borrar esta venta', body: h('p', null, `${s.qty} × ${s.productName} (${money(s.qty * s.price)}). Se devolverá al inventario.`), confirmText: 'Borrar' });
     if (ok) shop.deleteMove(s.id).catch(() => {});
@@ -200,11 +277,18 @@ export function SalesScreen(app) {
   }
 
   function render() {
+    if (!isAdmin && !fixed) {
+      for (const el of [overviewHost, bannerHost, statusHost, formHost, listHost, summaryHost, bothHost]) clear(el);
+      return renderChooser();
+    }
+    clear(chooserHost);
+    clear(bannerHost, isAdmin ? null : h('div', { class: 'picked' }, h('div', { class: 'grow' }, h('div', { class: 'li-title' }, `Este teléfono vende en la Caja ${state.caja}`), h('div', { class: 'li-sub' }, CAJA_NAMES[state.caja])), h('button', { class: 'link-btn', type: 'button', onclick: changeFixed }, 'Cambiar caja')));
     const d = day();
     const ov = dayOverview(shop.moves, shop.closings, d);
     const mine = ov.cajas.find((c) => c.caja === state.caja);
     const { sales } = daySales(shop.moves, d, state.caja);
     cajaRow.refresh();
+    renderBoth(d);
 
     clear(
       overviewHost,
@@ -304,12 +388,14 @@ export function SalesScreen(app) {
         'main',
         { class: 'content' },
         isAdmin ? h('label', { class: 'field' }, h('span', { class: 'field-label' }, 'Día'), dateInput) : null,
+        chooserHost,
         overviewHost,
-        cajaRow.el,
+        isAdmin ? cajaRow.el : bannerHost,
         statusHost,
         formHost,
         listHost,
         summaryHost,
+        bothHost,
         isAdmin ? bigButton('Ver el inventario', () => app.router.go('/inventory'), { outline: true, icon: 'list' }) : null,
       ),
     ),

@@ -2,7 +2,7 @@
 //  - El administrador entra con un correo interno fijo y su contraseña (el usuario nunca lo ve).
 //  - El trabajador entra como "anónimo" y registra una sesión con la clave derivada de la
 //    contraseña de trabajador; las reglas de Firestore solo le dejan leer si coincide.
-import { initializeApp } from 'firebase/app';
+import { initializeApp, getApps } from 'firebase/app';
 import {
   getAuth,
   signInAnonymously,
@@ -146,6 +146,22 @@ export class FirebaseBackend {
     } catch (e) {
       const kind = mapError(e).kind;
       return kind === 'wrong-password' ? false : null;
+    }
+  }
+
+  /**
+   * ¿Es esta la contraseña de administrador? Se comprueba en una sesión aparte, así NO se cierra la
+   * sesión de quien está usando el teléfono (por ejemplo un trabajador). null si no se pudo comprobar.
+   */
+  async verifyAdminPassword(password) {
+    try {
+      const app2 = getApps().find((a) => a.name === 'verify') ?? initializeApp(this.app.options, 'verify');
+      const auth2 = getAuth(app2);
+      await signInWithEmailAndPassword(auth2, ADMIN_EMAIL, password);
+      await signOut(auth2);
+      return true;
+    } catch (e) {
+      return mapError(e).kind === 'wrong-password' ? false : null;
     }
   }
 

@@ -79,6 +79,11 @@ export class MemoryBackend {
     return this.adminPassword === pw;
   }
 
+  async verifyAdminPassword(pw) {
+    this.needOnline();
+    return this.adminPassword === pw;
+  }
+
   async changeAdminPassword(current, next) {
     this.needOnline();
     if (this.adminPassword !== current) throw err('wrong-password');
