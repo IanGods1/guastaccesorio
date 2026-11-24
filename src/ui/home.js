@@ -77,8 +77,6 @@ export function HomeScreen(app) {
           tile({ icon: 'search', title: 'Precios', onclick: () => app.router.go('/prices') }),
           tile({ icon: 'list', title: 'Historial', onclick: () => app.router.go('/history') }),
           tile({ icon: 'box', title: 'Inventario', onclick: () => app.router.go('/inventory') }),
-          isAdmin ? tile({ wide: true, icon: 'phone', title: 'Escanear lista', sub: 'Foto de tu lista → grupos, solos', onclick: () => app.router.go('/scan') }) : null,
-          isAdmin ? tile({ wide: true, icon: 'paste', title: 'Pegar información', sub: 'De una IA a tu lista, con un toque', onclick: () => app.router.go('/paste') }) : null,
           isAdmin
             ? tile({ icon: 'edit', title: 'Administrar datos', sub: ready ? plural(nGroups, 'grupo', 'grupos') : '…', onclick: () => app.router.go('/admin') })
             : null,

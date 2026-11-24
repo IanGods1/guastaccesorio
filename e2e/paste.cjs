@@ -58,12 +58,14 @@ Espero que te sirva.`;
   for (let i = 0; i < 4; i++) await pw.nth(i).fill(i < 2 ? 'admin-secreta' : 'trabajo-123');
   await btn('Crear contraseñas').click();
   await text('¿Qué modelo buscas?').waitFor();
-  await btn('Pegar información').waitFor();
+  assert.equal(await btn('Pegar información', { exact: true }).count(), 0); // ya no está en el inicio
+  await btn('Administrar datos').click();
+  await btn('Pegar información de una IA').waitFor();
   await shot('inicio');
-  log('el administrador ve "Pegar información" en el inicio');
+  log('"Pegar información" está en Administrar datos (no en el inicio)');
 
   console.log('Pedir la información');
-  await btn('Pegar información').click();
+  await btn('Pegar información de una IA').click();
   await text('Pide la información a una IA').waitFor();
   await page.getByPlaceholder('ej. iPhone 13 o Galaxy A54').fill('iPhone 13');
   await btn('Copiar la pregunta para la IA').click();

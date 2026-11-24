@@ -35,10 +35,12 @@ const server = http.createServer((q, r) => {
   for (let i = 0; i < 4; i++) await pw.nth(i).fill(i < 2 ? 'admin-secreta' : 'trabajo-123');
   await btn('Crear contraseñas').click();
   await p.getByText('¿Qué modelo buscas?').waitFor();
-  await btn(/Escanear lista/).click();
+  assert.equal(await btn(/Escanear lista/).count(), 0); // ya no está en el inicio
+  await btn('Administrar datos').click();
+  await btn('Escanear lista (foto)').click();
   await p.getByText('¿Qué tipo de lista es?').waitFor();
   await shot('1-inicio');
-  console.log('  ✓ el administrador ve el botón y la pantalla Escanear lista');
+  console.log('  ✓ Escanear lista está en Administrar datos y abre su pantalla');
 
   assert.equal(await p.getByLabel(/Subir solo, sin revisar/).isChecked(), false); // por omisión se revisa antes
   await p.getByLabel(/Subir solo, sin revisar/).check();

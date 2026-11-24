@@ -72,7 +72,7 @@ El botón **Teléfonos nuevos** muestra los lanzamientos de las marcas populares
 
 ## Escanear lista (foto)
 
-Solo para el administrador: botón **Escanear lista** en el inicio (y en Administrar datos). Elige el tipo de lista (Case, Vidrio normal, 9D o privacy), toma la foto o elígela de la galería y los grupos de compatibles se agregan y se suben solos a esa categoría. Cada renglón con varios modelos (separados por coma, "/", "-" o "+"), o cada bloque separado por un espacio, es un grupo. Siempre queda **Deshacer lo que agregué**. Si desmarcas "Subir solo, sin revisar antes", primero te muestra el texto leído para que lo corrijas. La lectura se hace en el teléfono (la foto no se envía a ningún lado). Prueba en navegador: `npm run build:test && NODE_PATH=$(npm root -g) node e2e/scan.cjs`.
+Solo para el administrador: en **Administrar datos → Escanear lista (foto)**. Elige el tipo de lista (Case, Vidrio normal, 9D o privacy), toma la foto o elígela de la galería y los grupos de compatibles se agregan y se suben solos a esa categoría. Cada renglón con varios modelos (separados por coma, "/", "-" o "+"), o cada bloque separado por un espacio, es un grupo. Siempre queda **Deshacer lo que agregué**. Si desmarcas "Subir solo, sin revisar antes", primero te muestra el texto leído para que lo corrijas. La lectura se hace en el teléfono (la foto no se envía a ningún lado). Prueba en navegador: `npm run build:test && NODE_PATH=$(npm root -g) node e2e/scan.cjs`.
 
 ### Leer con IA (más preciso)
 
@@ -80,7 +80,7 @@ En **Escanear lista** puedes pegar una llave de API de Anthropic (empieza con `s
 
 ## Pegar información de una IA
 
-Solo para el administrador (botón **Pegar información** en el inicio).
+Solo para el administrador (en **Administrar datos → Pegar información de una IA**).
 
 1. Escribe el modelo (ej. "iPhone 13") y toca **Copiar la pregunta para la IA**. Pégala en ChatGPT, Claude u otra IA: la pregunta ya le pide la respuesta en el formato que la app entiende.
 2. Copia la respuesta de la IA y pégala en el cuadro (o toca **Pegar del portapapeles**).
