@@ -81,6 +81,7 @@ export function HomeScreen(app) {
             onclick: () => app.router.go('/models'),
           }),
           tile({ icon: 'cart', title: 'Ventas del día', onclick: () => app.router.go('/sales') }),
+          tile({ icon: 'search', title: 'Precios', onclick: () => app.router.go('/prices') }),
           tile({ icon: 'box', title: 'Inventario', onclick: () => app.router.go('/inventory') }),
           tile({ wide: true, icon: 'phone', title: 'Teléfonos nuevos', sub: 'Lanzamientos', onclick: () => app.router.go('/releases') }),
           isAdmin ? tile({ wide: true, icon: 'phone', title: 'Escanear lista', sub: 'Foto de tu lista → grupos, solos', onclick: () => app.router.go('/scan') }) : null,

@@ -41,6 +41,13 @@ La web tiene un diseño nuevo: buscador grande con degradado, accesos en mosaico
 - **Administrador**: ve el total vendido y el fondo de las dos cajas de cualquier día (selector de día), lo que se vendió por producto, puede borrar una venta (vuelve al inventario) y reabrir un día cerrado.
 - Se maneja en quetzales (Q). El día es el de la fecha del teléfono. Prueba en navegador: `npm run build:test && NODE_PATH=$(npm root -g) node e2e/shop.cjs`.
 
+## Categorías, búsqueda por precio y pantalla Precios
+
+- **Categorías** de producto: Protectores, Cargadores, Cables, Bocinas, Gorras, Accesorios infantil, Accesorios para hombres y Carros eléctricos; el administrador también puede escribir una nueva ("Otra categoría…") al agregar o editar un producto. El Inventario tiene botones por categoría.
+- **El inventario es uno solo para las dos cajas** (ya no se asigna un producto a una caja). La caja se elige al **anotar la venta**, según en cuál se deja el dinero. Debajo de cada caja salen letras pequeñas con su nombre (Caja 1: Accesorios, Caja 2: Carros eléctricos; están en `CAJA_NAMES` de `src/core/shop.js`).
+- **Buscar** en Inventario, Ventas y Precios: por nombre, categoría, código de barras o **precio** ("50" o "Q50" encuentra los de ese precio y los que empiezan con 50).
+- **Precios** (botón en el inicio, para todos): lista de productos con su precio grande para decir "a cómo sale", con botones por categoría y buscador.
+
 ## Códigos de barras y etiquetas
 
 **Publica otra vez `firestore.rules`** (agrega la colección `barcodes`).
@@ -49,7 +56,7 @@ La web tiene un diseño nuevo: buscador grande con degradado, accesos en mosaico
 - En el formulario del producto el código ya viene puesto; si el producto trae código de fábrica (EAN-13 o UPC-A) se escribe o escanea ahí, y la app avisa si ya lo usa otro producto. Cambiarlo o borrar el producto libera el anterior.
 - **Inventario → Generar códigos que faltan** les pone código a los productos que ya estaban.
 - **Inventario → Etiquetas para imprimir:** etiqueta con nombre, código de barras y precio en 40×30, 50×30 o 60×40 mm. **Compartir / guardar imagen** la manda a Labelife (u otra app) o la guarda como PNG. Verificado con un lector de códigos real.
-- **Ventas → Código de barras:** un lector USB o Bluetooth (que escribe el código y manda Enter) o teclear el código elige el producto y su precio; respeta la caja. Escanear con la cámara no está incluido (iPhone/Safari no tiene la función necesaria).
+- **Ventas → buscador:** un lector USB o Bluetooth (que escribe el código y manda Enter) o teclear el código elige el producto y su precio. Escanear con la cámara no está incluido (iPhone/Safari no tiene la función necesaria).
 
 ## Teléfonos nuevos (automático)
 

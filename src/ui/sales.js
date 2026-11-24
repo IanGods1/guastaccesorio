@@ -2,7 +2,7 @@
 // con el fondo que deja. Lo anotado no se puede editar ni borrar; solo el administrador corrige.
 import { h, clear, icon, appBar, bigButton, choiceRow, emptyState, openDialog, toast } from './dom.js';
 import { normalizeCode } from '../core/barcode.js';
-import { money, parseMoney, parseQty, dayString, stockMap, daySales, byProduct, dayOverview, productInCaja, CAJAS } from '../core/shop.js';
+import { money, parseMoney, parseQty, dayString, stockMap, daySales, byProduct, dayOverview, searchProducts, CAJAS, CAJA_NAMES, NO_CATEGORY } from '../core/shop.js';
 
 const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
 const fmtDay = (day) => new Date(day + 'T12:00:00').toLocaleDateString('es', { weekday: 'long', day: 'numeric', month: 'long' });
@@ -24,19 +24,20 @@ export function SalesScreen(app) {
   const shop = app.shop;
   const isAdmin = app.auth.role === 'ADMIN';
   const by = isAdmin ? 'admin' : 'worker';
-  const state = { caja: CAJAS.includes(app.storage.getItem('gc_caja')) ? app.storage.getItem('gc_caja') : '1', dayOverride: null };
+  const state = { productId: '', caja: CAJAS.includes(app.storage.getItem('gc_caja')) ? app.storage.getItem('gc_caja') : '1', dayOverride: null };
   const day = () => state.dayOverride ?? dayString();
   const isToday = () => day() === dayString();
 
   // Campos fijos (así no pierden el foco cuando llegan datos nuevos)
-  const select = h('select', { class: 'input', 'aria-label': 'Producto', onchange: () => onProduct() });
-  // Lector de códigos (USB o Bluetooth): escribe el código y manda Enter; también se puede teclear.
-  const scan = h('input', {
-    class: 'input', type: 'text', inputmode: 'numeric', placeholder: 'Escanea o escribe el código de barras', autocomplete: 'off', 'aria-label': 'Código de barras',
+  // Buscador de productos: por nombre, precio, categoría o código. Un lector de códigos (USB o Bluetooth)
+  // escribe el código y manda Enter, y eso elige el producto.
+  const search = h('input', {
+    class: 'input', type: 'search', placeholder: 'Nombre, precio o código', autocomplete: 'off', 'aria-label': 'Buscar producto',
+    oninput: () => renderPicker(),
     onkeydown: (e) => {
       if (e.key !== 'Enter') return;
       e.preventDefault();
-      onScan(scan.value.trim());
+      onEnter(search.value.trim());
     },
   });
   const qty = h('input', { class: 'input qty', type: 'text', inputmode: 'numeric', value: '1', 'aria-label': 'Cantidad' });
@@ -49,7 +50,7 @@ export function SalesScreen(app) {
     onSelect: (v) => ((state.caja = v), app.storage.setItem('gc_caja', v), render()),
     sublabel: (c) => {
       const o = dayOverview(shop.moves, shop.closings, day()).cajas.find((x) => x.caja === c);
-      return o.closed ? 'Cerrada ✓' : money(o.total);
+      return o.closed ? `${CAJA_NAMES[c]} · cerrada ✓` : CAJA_NAMES[c];
     },
   });
 
@@ -61,38 +62,63 @@ export function SalesScreen(app) {
 
   const stockOfProduct = (id) => stockMap(shop.moves)[id] ?? 0;
 
-  function fillProducts() {
-    const keep = select.value;
-    const stocks = stockMap(shop.moves);
-    const mine = shop.productList().filter((p) => productInCaja(p, state.caja));
-    clear(
-      select,
-      h('option', { value: '' }, mine.length ? 'Elige el producto…' : `No hay productos para la Caja ${state.caja}`),
-      mine.map((p) => h('option', { value: p.id }, `${p.name} · ${money(p.price)} (quedan ${stocks[p.id] ?? 0})`)),
-    );
-    if (keep && shop.products[keep]) select.value = keep;
-  }
+  const pickerHost = h('div', { class: 'stack' });
 
-  function onProduct() {
-    const p = shop.products[select.value];
-    price.value = p ? String(p.price) : '';
-  }
-
-  function onScan(raw) {
-    scan.value = '';
-    if (!raw) return;
-    const p = shop.byBarcode(normalizeCode(raw) ?? raw);
-    if (!p) return toast(`No existe el código ${raw}`);
-    if (!productInCaja(p, state.caja)) return toast(`"${p.name}" no se vende en la Caja ${state.caja}`);
-    select.value = p.id;
-    onProduct();
+  function choose(p) {
+    state.productId = p.id;
+    price.value = String(p.price);
     qty.value = '1';
-    toast(`${p.name} · ${money(p.price)}`);
-    scan.focus();
+    search.value = '';
+    renderPicker();
+  }
+
+  /** Enter en el buscador: un código de barras exacto, o el único resultado. */
+  function onEnter(raw) {
+    if (!raw) return;
+    const byCode = shop.byBarcode(normalizeCode(raw) ?? raw);
+    if (byCode) return choose(byCode), toast(`${byCode.name} · ${money(byCode.price)}`);
+    const found = searchProducts(shop.productList(), raw);
+    if (found.length === 1) return choose(found[0]);
+    toast(found.length ? 'Toca el producto de la lista' : `No hay productos con "${raw}"`);
+  }
+
+  function renderPicker() {
+    const stocks = stockMap(shop.moves);
+    const chosen = shop.products[state.productId];
+    if (state.productId && !chosen) state.productId = '';
+    const q = search.value.trim();
+    const found = searchProducts(shop.productList(), q).slice(0, 12);
+    clear(
+      pickerHost,
+      chosen
+        ? h(
+            'div',
+            { class: 'picked' },
+            h('div', { class: 'grow' }, h('div', { class: 'li-title' }, chosen.name), h('div', { class: 'li-sub' }, `${chosen.category || NO_CATEGORY} · ${money(chosen.price)} · quedan ${stocks[chosen.id] ?? 0}`)),
+            h('button', { class: 'link-btn', type: 'button', onclick: () => ((state.productId = ''), (price.value = ''), renderPicker(), search.focus()) }, 'Cambiar'),
+          )
+        : null,
+      !chosen || q
+        ? found.length
+          ? h(
+              'div',
+              { class: 'card results' },
+              found.map((p) =>
+                h(
+                  'button',
+                  { class: 'list-item', type: 'button', onclick: () => choose(p) },
+                  h('div', { class: 'grow' }, h('div', { class: 'li-title' }, p.name), h('div', { class: 'li-sub' }, `${p.category || NO_CATEGORY} · quedan ${stocks[p.id] ?? 0}`)),
+                  h('b', null, money(p.price)),
+                ),
+              ),
+            )
+          : h('p', { class: 'muted small center' }, shop.productList().length ? `No hay productos con "${q}"` : 'Todavía no hay productos. El administrador los agrega en Inventario.')
+        : null,
+    );
   }
 
   async function sell() {
-    const product = shop.products[select.value];
+    const product = shop.products[state.productId];
     const q = parseQty(qty.value);
     const pr = parseMoney(price.value);
     if (!product) return toast('Elige el producto');
@@ -181,7 +207,7 @@ export function SalesScreen(app) {
       ),
     );
 
-    fillProducts();
+    renderPicker();
     clear(
       formHost,
       mine.closed
@@ -190,8 +216,8 @@ export function SalesScreen(app) {
             'div',
             { class: 'card step' },
             h('div', { class: 'step-title' }, `Anotar una venta · Caja ${state.caja}`),
-            h('label', { class: 'field' }, h('span', { class: 'field-label' }, 'Código de barras'), scan),
-            h('label', { class: 'field' }, h('span', { class: 'field-label' }, 'Producto'), select),
+            h('label', { class: 'field' }, h('span', { class: 'field-label' }, 'Producto'), search),
+            pickerHost,
             h('div', { class: 'row' }, h('label', { class: 'field grow' }, h('span', { class: 'field-label' }, 'Cantidad'), qty), h('label', { class: 'field grow' }, h('span', { class: 'field-label' }, 'Precio de cada uno (Q)'), price)),
             bigButton('Anotar venta', sell, { icon: 'add' }),
           ),

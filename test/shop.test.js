@@ -150,3 +150,30 @@ test('shop: el código de barras nunca se repite (la nube lo rechaza)', async ()
   await a.deleteProduct(bocina.id);
   assert.equal(fresh in cloud.barcodes, false);
 });
+
+import { searchProducts, categoriesIn, CATEGORIES, NO_CATEGORY } from '../src/core/shop.js';
+
+test('shop: buscar por nombre, precio, categoría o código', () => {
+  const list = [
+    { id: '1', name: 'Cargador rápido', price: 50, category: 'Cargadores', barcode: '2000000000015' },
+    { id: '2', name: 'Cable USB-C', price: 25.5, category: 'Cables' },
+    { id: '3', name: 'Bocina grande', price: 500, category: 'Bocinas' },
+    { id: '4', name: 'Gorra azul', price: 50, category: '' },
+    { id: '5', name: 'Protector 9D', price: 15, category: 'Protectores' },
+  ];
+  const names = (q, o) => searchProducts(list, q, o).map((p) => p.name);
+  assert.deepEqual(names('cargador'), ['Cargador rápido']);
+  assert.deepEqual(names('CARGADOR'), ['Cargador rápido']);
+  assert.deepEqual(names('50'), ['Cargador rápido', 'Gorra azul', 'Bocina grande']); // exactos primero; luego los que empiezan con 50
+  assert.deepEqual(names('Q50'), ['Cargador rápido', 'Gorra azul', 'Bocina grande']);
+  assert.deepEqual(names('25.50'), ['Cable USB-C']);
+  assert.deepEqual(names('25,5'), ['Cable USB-C']);
+  assert.deepEqual(names('bocinas'), ['Bocina grande']); // por categoría
+  assert.deepEqual(names('2000000000015'), ['Cargador rápido']); // por código
+  assert.deepEqual(names('', { category: 'Cables' }), ['Cable USB-C']);
+  assert.deepEqual(names('', { category: NO_CATEGORY }), ['Gorra azul']);
+  assert.deepEqual(names('zzz'), []);
+  assert.equal(searchProducts(list, '').length, 5);
+  assert.deepEqual(CATEGORIES.slice(0, 7), ['Protectores', 'Cargadores', 'Cables', 'Bocinas', 'Gorras', 'Accesorios infantil', 'Accesorios para hombres']);
+  assert.ok(categoriesIn({ x: { category: 'Juguetes' } }).includes('Juguetes'));
+});

@@ -23,6 +23,10 @@ const log = (m) => console.log(`  ✓ ${m}`);
   const shot = async (n) => shots && (await page.waitForTimeout(450), page.screenshot({ path: path.join(shots, `ventas-${n}.png`) }));
   const btn = (n, o) => page.getByRole('button', { name: n, ...o });
   const text = (t, o) => page.getByText(t, o);
+  const pickProduct = async (q, name) => {
+    await page.getByLabel('Buscar producto').fill(q);
+    await page.locator('.results').getByText(name, { exact: true }).click();
+  };
   const cloud = () => page.evaluate(() => window.__app.backend.cloud);
 
   // --- Administrador: crea contraseñas y productos
@@ -41,11 +45,23 @@ const log = (m) => console.log(`  ✓ ${m}`);
     await btn('Guardar').click();
     await text(name, { exact: true }).waitFor();
   }
-  // El cargador es solo de la Caja 2
+  // Categorías: una de la lista y una nueva
   await text('Cargador', { exact: true }).click();
-  await btn('Solo Caja 2').click();
+  await page.getByLabel('Categoría').selectOption('Cargadores');
   await btn('Guardar').click();
-  await text('Solo Caja 2').first().waitFor();
+  await text('Cargadores · Q50.00').waitFor();
+  await text('Ventilador', { exact: true }).click();
+  await page.getByLabel('Categoría').selectOption({ label: 'Otra categoría…' });
+  await page.getByPlaceholder('Escribe la categoría nueva').fill('Ventiladores');
+  await btn('Guardar').click();
+  await text('Ventiladores · Q120.00').waitFor();
+  await btn('Ventiladores', { exact: true }).click();
+  assert.equal(await text('Cargador', { exact: true }).count(), 0);
+  await btn('Todas', { exact: true }).click();
+  await page.getByLabel('Buscar por nombre, precio o código').or(page.getByPlaceholder('Buscar por nombre, precio o código')).first().fill('50');
+  await text('Cargador', { exact: true }).waitFor(); // buscar por precio
+  await page.getByPlaceholder('Buscar por nombre, precio o código').fill('');
+  log('categorías (de la lista y nuevas), filtro por categoría y búsqueda por precio en el inventario');
   await text('20 en existencia').first().waitFor();
   await shot('1-inventario-admin');
   assert.equal(Object.keys((await cloud()).products).length, 2);
@@ -86,24 +102,33 @@ const log = (m) => console.log(`  ✓ ${m}`);
   await btn('Ventas del día').click();
   await text('Anotar una venta · Caja 1').waitFor();
   // Escanear: el lector escribe el código y manda Enter
-  await page.getByLabel('Código de barras', { exact: true }).fill(prods.find((p) => p.name === 'Cargador').barcode);
-  await page.getByLabel('Código de barras', { exact: true }).press('Enter');
-  await text('no se vende en la Caja 1').waitFor(); // el cargador es solo de la Caja 2
-  await page.getByLabel('Código de barras', { exact: true }).fill('0000000000000');
-  await page.getByLabel('Código de barras', { exact: true }).press('Enter');
-  await text('No existe el código').waitFor();
-  await page.getByLabel('Código de barras', { exact: true }).fill(prods.find((p) => p.name === 'Ventilador').barcode);
-  await page.getByLabel('Código de barras', { exact: true }).press('Enter');
-  assert.equal(await page.getByLabel('Precio de cada uno').inputValue(), '120');
-  log('escanear un código elige el producto (y respeta la caja)');
-  await page.getByLabel('Producto').selectOption({ label: 'Ventilador · Q120.00 (quedan 20)' });
+  const searchBox = page.getByLabel('Buscar producto');
+  await text('Caja 1', { exact: true }).first().waitFor();
+  await text('Accesorios', { exact: true }).waitFor(); // letras pequeñas debajo de cada caja
+  await text('Carros eléctricos', { exact: true }).waitFor();
+  await searchBox.fill('zzz');
+  await text('No hay productos con "zzz"').waitFor();
+  await searchBox.fill('50'); // por precio
+  await page.locator('.results').getByText('Cargador', { exact: true }).waitFor();
+  await searchBox.fill('120');
+  await page.locator('.results').getByText('Ventilador', { exact: true }).waitFor();
+  log('en Ventas se busca por nombre y por precio; cada caja muestra su nombre');
+  await searchBox.fill('0000000000000');
+  await searchBox.press('Enter');
+  await text('No hay productos con').first().waitFor();
+  await searchBox.fill(prods.find((p) => p.name === 'Cargador').barcode);
+  await searchBox.press('Enter'); // lector de códigos
+  await text('Cargadores · Q50.00 · quedan 20').waitFor();
+  assert.equal(await page.getByLabel('Precio de cada uno').inputValue(), '50');
+  await page.getByRole('button', { name: 'Cambiar' }).click();
+  log('un código escaneado elige el producto');
+  await pickProduct('ventil', 'Ventilador');
   assert.equal(await page.getByLabel('Precio de cada uno').inputValue(), '120');
   await btn('Anotar venta').click();
   await text('1 × Ventilador a Q120.00 = Q120.00').waitFor();
   await btn('Sí, anotar').click();
   await text('1 × Ventilador', { exact: true }).waitFor();
-  assert.deepEqual(await page.getByLabel('Producto').locator('option').allInnerTexts(), ['Elige el producto…', 'Ventilador · Q120.00 (quedan 19)']); // el cargador es solo de la Caja 2
-  await page.getByLabel('Producto').selectOption({ label: 'Ventilador · Q120.00 (quedan 19)' });
+  await pickProduct('ventil', 'Ventilador');
   await page.getByLabel('Cantidad').fill('2');
   await page.getByLabel('Precio de cada uno').fill('45');
   await btn('Anotar venta').click();
@@ -118,7 +143,7 @@ const log = (m) => console.log(`  ✓ ${m}`);
   log('el trabajador anota ventas (con confirmación) y no puede borrarlas');
 
   // Cantidad mayor al inventario: avisa
-  await page.getByLabel('Producto').selectOption({ label: 'Ventilador · Q120.00 (quedan 17)' });
+  await pickProduct('ventil', 'Ventilador');
   await page.getByLabel('Cantidad').fill('30');
   await btn('Anotar venta').click();
   await text('solo hay 17').waitFor();
@@ -143,7 +168,7 @@ const log = (m) => console.log(`  ✓ ${m}`);
   // La otra caja sigue abierta
   await btn(/Caja 2/).click();
   await text('Anotar una venta · Caja 2').waitFor();
-  await page.getByLabel('Producto').selectOption({ label: 'Cargador · Q50.00 (quedan 20)' });
+  await pickProduct('carga', 'Cargador');
   await page.getByLabel('Cantidad').fill('1');
   await btn('Anotar venta').click();
   await btn('Sí, anotar').click();
@@ -153,14 +178,24 @@ const log = (m) => console.log(`  ✓ ${m}`);
 
   // Inventario del trabajador: solo lectura, con lo vendido
   await page.goto(url + '#/inventory');
-  await text('19 en existencia').waitFor(); // abre en su caja (la 2)
-  await btn('Caja 1', { exact: true }).click();
-  assert.equal(await text('Cargador', { exact: true }).count(), 0); // el cargador no es de la Caja 1
-  await btn('Todos').click();
+  await text('19 en existencia').waitFor();
   await text('17 en existencia').waitFor();
   assert.equal(await btn('Agregar producto').count(), 0);
   await shot('4-inventario-trabajador');
   log('el inventario baja con las ventas (19 y 17) y es de solo lectura para el trabajador');
+
+  // Pantalla de precios (para decir "a cómo sale")
+  await page.goto(url + '#/prices');
+  await text('Ventilador', { exact: true }).waitFor();
+  await text('Q120.00').waitFor();
+  await page.getByLabel('Buscar precio').fill('50');
+  await text('Cargador', { exact: true }).waitFor();
+  assert.equal(await text('Ventilador', { exact: true }).count(), 0);
+  await page.getByLabel('Buscar precio').fill('');
+  await btn('Ventiladores', { exact: true }).click();
+  assert.equal(await text('Cargador', { exact: true }).count(), 0);
+  await shot('4b-precios');
+  log('Precios: se busca por nombre, precio o categoría');
 
   // --- Administrador revisa y corrige
   // otro teléfono: se conserva solo la "nube" simulada

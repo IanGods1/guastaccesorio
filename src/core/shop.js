@@ -9,6 +9,50 @@
 
 export const CAJAS = ['1', '2'];
 
+/** Letras pequeñas debajo de cada caja. */
+export const CAJA_NAMES = { 1: 'Accesorios', 2: 'Carros eléctricos' };
+
+/** Categorías de producto (el administrador puede escribir otra al agregar un producto). */
+export const CATEGORIES = ['Protectores', 'Cargadores', 'Cables', 'Bocinas', 'Gorras', 'Accesorios infantil', 'Accesorios para hombres', 'Carros eléctricos'];
+export const NO_CATEGORY = 'Sin categoría';
+
+/** Categorías que se muestran: las de siempre más las que se hayan usado. */
+export function categoriesIn(products) {
+  const used = new Set(Object.values(products).map((p) => p.category).filter(Boolean));
+  return [...CATEGORIES, ...[...used].filter((c) => !CATEGORIES.includes(c)).sort((a, b) => a.localeCompare(b, 'es'))];
+}
+
+const fold = (s) => String(s ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+
+/**
+ * Busca productos por nombre, categoría, código de barras o PRECIO.
+ * "50" o "Q50" o "50.00" encuentra los de ese precio (y los que empiezan así, como 500); el texto, los nombres.
+ * @param {object[]} products lista de productos
+ * @param {string} query lo que se escribió
+ * @param {{category?: string}} opts category: '' = todas, o el nombre (NO_CATEGORY = sin categoría)
+ */
+export function searchProducts(products, query, { category = '' } = {}) {
+  const q = fold(query).trim();
+  const num = q.replace(/^q/, '').replace(',', '.');
+  const isNum = /^\d+(\.\d{0,2})?$/.test(num);
+  const price = (p) => Math.round(Number(p.price) * 100) / 100;
+  return products
+    .filter((p) => !category || (category === NO_CATEGORY ? !p.category : p.category === category))
+    .filter((p) => {
+      if (!q) return true;
+      if (fold(p.name).includes(q) || fold(p.category).includes(q) || (p.barcode ?? '').includes(q)) return true;
+      if (isNum) {
+        const s = String(price(p));
+        return s === String(Number(num)) || s.startsWith(num.replace(/\.$/, ''));
+      }
+      return false;
+    })
+    .sort((a, b) => {
+      const exact = (p) => (isNum && price(p) === Number(num) ? 0 : 1);
+      return exact(a) - exact(b) || a.name.localeCompare(b.name, 'es');
+    });
+}
+
 /** Cajas donde se vende un producto (por omisión, las dos). */
 export function parseCajas(v) {
   const list = Array.isArray(v) ? v.filter((c) => CAJAS.includes(c)) : [];

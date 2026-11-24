@@ -27,7 +27,7 @@ export class ShopStore {
   }
 
   setProducts(docs) {
-    this.products = Object.fromEntries(Object.entries(docs).map(([id, d]) => [id, { id, name: String(d.name ?? ''), price: Number(d.price ?? 0), cajas: parseCajas(d.cajas), barcode: typeof d.barcode === 'string' ? d.barcode : '' }]));
+    this.products = Object.fromEntries(Object.entries(docs).map(([id, d]) => [id, { id, name: String(d.name ?? ''), price: Number(d.price ?? 0), cajas: parseCajas(d.cajas), barcode: typeof d.barcode === 'string' ? d.barcode : '', category: typeof d.category === 'string' ? d.category : '' }]));
     this.loaded.products = true;
     this.emit();
   }
@@ -89,10 +89,10 @@ export class ShopStore {
    * Guarda un producto. `barcode` es el código nuevo ('' = sin código). Si cambia, se registra el nuevo en
    * "barcodes" (la nube rechaza un código repetido) y se libera el anterior.
    */
-  saveProduct({ id = null, name, price, cajas = ['1', '2'], initialStock = 0, barcode = '', by = 'admin' }) {
+  saveProduct({ id = null, name, price, cajas = ['1', '2'], category = '', initialStock = 0, barcode = '', by = 'admin' }) {
     const pid = id ?? newId();
     const old = id ? (this.products[id]?.barcode ?? '') : '';
-    const writes = [{ col: 'products', id: pid, doc: { name: name.trim(), price, cajas: parseCajas(cajas), ...(barcode ? { barcode } : {}) } }];
+    const writes = [{ col: 'products', id: pid, doc: { name: name.trim(), price, cajas: parseCajas(cajas), ...(category ? { category } : {}), ...(barcode ? { barcode } : {}) } }];
     if (barcode && barcode !== old) writes.push({ col: 'barcodes', id: barcode, doc: { productId: pid } });
     if (old && old !== barcode) writes.push({ col: 'barcodes', id: old, doc: null });
     if (!id && initialStock > 0) writes.push({ col: 'moves', id: newId(), doc: stockDoc({ product: { id: pid, name: name.trim() }, qty: initialStock, kind: 'in', by }) });
@@ -120,7 +120,7 @@ export class ShopStore {
     for (const p of this.missingBarcodes().sort((a, b) => a.name.localeCompare(b.name, 'es'))) {
       const code = nextBarcode(used);
       used.push(code);
-      writes.push({ col: 'products', id: p.id, doc: { name: p.name, price: p.price, cajas: p.cajas, barcode: code } });
+      writes.push({ col: 'products', id: p.id, doc: { name: p.name, price: p.price, cajas: p.cajas, ...(p.category ? { category: p.category } : {}), barcode: code } });
       writes.push({ col: 'barcodes', id: code, doc: { productId: p.id } });
     }
     return writes.length ? this.write(writes).then(() => writes.length / 2) : Promise.resolve(0);

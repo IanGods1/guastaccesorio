@@ -441,3 +441,6 @@ body::before {
 .stock.ok { background: color-mix(in srgb, #1f8a4c 20%, transparent); color: var(--on-surface); }
 .stock.low { background: color-mix(in srgb, #d98a00 28%, transparent); color: var(--on-surface); }
 .stock.out { background: color-mix(in srgb, #c0392b 28%, transparent); color: var(--on-surface); }
+.price-big { font-size: 22px; letter-spacing: -0.01em; white-space: nowrap; }
+.picked { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-radius: 16px; background: color-mix(in srgb, var(--primary) 14%, transparent); border: 1px solid var(--glass-border); }
+.results { max-height: 340px; overflow: auto; }
