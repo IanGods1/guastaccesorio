@@ -1,5 +1,5 @@
 {
- "updated": "2026-11-23",
+ "updated": "2026-11-27",
  "source": "Wikidata y Wikipedia",
  "phones": [
   {
@@ -451,11 +451,6 @@
    "name": "Xiaomi 17 Pro Max",
    "brand": "Xiaomi",
    "year": 2025
-  },
-  {
-   "name": "Huawei Mate 70",
-   "brand": "Huawei",
-   "date": "2024-11-26"
   }
  ]
 }
